@@ -1,0 +1,64 @@
+\documentclass[12pt, letterpaper]{drexelthesis}
+\usepackage[dvips]{graphics}
+\usepackage{graphicx}% needed for including graphics e.g. EPS, PS
+\usepackage{subfigure}% subcaptions for subfigures
+\usepackage{subfigmat}% matrices of similar subfigures, aka small mulitples
+\usepackage{afterpage}
+\usepackage{dcolumn}%   decimal-aligned tabular math columns
+	\newcolumntype{d}{D{=}{=}{4,4}}
+\usepackage{amssymb}
+%\usepackage[square]{natbib}
+\usepackage{ifthen}
+\usepackage{rotating}
+
+\makeatletter
+\newenvironment{figurehere}
+  {\def\@captype{figure}}
+  {}
+\makeatother
+
+\tolerance=300
+
+\author{Daniel Hennessey}
+\degree{Master of Science}
+\degreearea{Computer Science}
+\advisor{Dr. David Breen}
+\title{Implementation of Algorithms for the Visualization and Simulation of ADHOC and Cognitive Networks.}
+\gmonth{June}
+%\gyear{2006} % default year is the current year
+
+%\includeonly{chapter1}
+
+\begin{document} 
+
+	\doublespacing
+	\maketitle 
+
+\begin{preliminary}
+	\sloppy
+	\copyrightpage
+%	\include{dedications}
+	\include{acknowledgments}
+	\mytableofcontents
+	\mylistoftables
+	\mylistoffigures
+	\include{abstract}
+\end{preliminary}
+
+\begin{thesis}
+	\fussy
+	\include{chapter1} %Introduction
+	\include{chapter2} %Network Visualization
+%	\include{chapter3} %Graph Simplification
+%	\include{chapter4} %GPU based Cognitive Networking Algorithms
+	\include{chapter5} %Discussion
+	\include{chapter6} %Conclusion 
+
+	\singlespacing
+%	\bibliographystyle{apa}
+	\bibliographystyle{plain}
+  \addcontentsline{toc}{chapter}{Bibliography}
+	\bibliography{references}
+\end{thesis}
+
+\end{document}

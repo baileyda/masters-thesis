@@ -1,0 +1,9 @@
+	Citation Graph		Inet4500	
+	Weight Range	Ratio	Weight Range	Ratio
+1-Ring	1 to 75	0.072195122	1 to 942	0.209333333
+2-Ring	2 to 380	0.368780488	2 to 3585	0.796666667
+3-Ring	3 to 763	0.741463415	3 to 4432	0.984222222
+Shortest Path	0 to 85284	83.20390244	0 to 12926842	2872.631556
+Dist to Leaf	0 to 7	0.006829268	0 to 4	0.000888889
+Dist to Center	1 to 10	0.008780488	1 to 6	0.001111111
+Eccentricity	9 to 17	0.008780488	5 to 9	0.000888889
