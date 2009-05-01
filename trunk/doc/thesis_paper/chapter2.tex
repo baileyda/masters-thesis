@@ -155,7 +155,7 @@ All files that contribute to the desired viewport will be loaded in their entire
 
 
 \subsection{Integration with OMAN}
-The design of the terrain library allowed for easy integration with OMAN.  OMAN is able to use the terrain library to read in specific terrain to match the desired simulation arena.  The terrain can then be visualized along with the simulated network setup in either 2D or 3D.  In 2D the terrain data is turned into a height map that can be colored in a series of different color schemes.  Figure \ref{fig:terrain_color_schemes} shows a sample of the different color schemes available to visualize the terrain.  
+The design of the terrain library allowed for easy integration with OMAN.  OMAN is able to use the terrain library to read in specific terrain to match the desired simulation arena.  The terrain can then be visualized along with the simulated network setup in either 2D or 3D.  In both 2D and 3D visualizations the terrain data is turned into a height map that can be colored in a series of different color schemes.  Figure \ref{fig:terrain_color_schemes} shows a sample of the different color schemes available to visualize the terrain.  
 
 \begin{figure}[ht]
 \centering
@@ -172,12 +172,32 @@ The design of the terrain library allowed for easy integration with OMAN.  OMAN 
 	\includegraphics[scale=0.3]{images/network_vis/terrain_color_scheme_3.eps}
 	\label{fig:oman_color_3}
 }
-  \caption{These figures illustrate 3 of the different possible color maps that can be applied to the visualization of the terrain in 2D. \subref{fig:oman_color_1} is a standard terrain color gradient, \subref{fig:oman_color_2} is a forest gradient shifting from white to green, and \subref{fig:oman_color_3} is a standard gray scale gradient}
+\subfigure[]{
+	\includegraphics[scale=0.3]{images/network_vis/terrain_color_scheme_4.eps}
+	\label{fig:oman_color_4}
+}
+  \caption{These figures illustrate 3 of the different possible color maps that can be applied to the visualization of the terrain in 2D. \subref{fig:oman_color_1} is a standard terrain color gradient, \subref{fig:oman_color_2} is a forest gradient shifting from white to green, \subref{fig:oman_color_3} is a standard gray scale gradient, and \subref{fig:oman_color_4} is an HSV color gradient starting at blue and sweeping to red.}
 \label{fig:terrain_color_schemes}
 \end{figure}
 
-Users can also choose what minimum and maximum elevation values to use when computing the color schemes.  They can choose to use the current terrains min and max values, the known highest and lowest terrain values in the United States, or the known highest and lowest terrain values in the world.
+Users can also choose what minimum and maximum elevation values to use when computing the color schemes.  They can choose to use the current terrains minimum and maximum values, the known highest and lowest terrain values in the United States, or the known highest and lowest terrain values in the world.  Once the terrain has been converted into a color coded height map it is ready for display.  In 2D this height map is simply turned into an image and used as a background on which the network layouts can be placed on top of.  Figures \ref{fig:oman_flow_graph_2D} shows an OMAN flow graph overlayed on top of a terrain region while Figure \ref{fig:oman_physical_graph_2D} shows an OMAN physical graph.  Visualizing the graph structures on top of a map of the terrain can give the users more insight into how and why the simulation acted as it did.  Users can visually see the terrain and can better understand how it has affected the simulation results.
 
+\begin{figure}[ht]
+\centering
+
+\subfigure[OMAN flow graph]{
+	\includegraphics[scale=0.33]{images/network_vis/terrain-with-flow-graph_1.eps}
+	\label{fig:oman_flow_graph_2D}
+}
+\subfigure[OMAN physical graph]{
+	\includegraphics[scale=0.33]{images/network_vis/terrain-with-physical-graph.eps}
+	\label{fig:oman_physical_graph_2D}
+}
+  \caption{Figures showing OMAN network graphs visualized on top of terrain}
+\label{fig:oman_graphs_on_terrain}
+\end{figure}
+
+%can now move onto talking about 3D vis and showing images of that.  Explaining benefits of 3D vis.  able to better see the contours of the terrain.  visual objstructions become more apparent.  can better analyze movement patterns with movement graphs, etc.
 
 \section{Conclusion}
 a brief conclusion about our work on this topic.
