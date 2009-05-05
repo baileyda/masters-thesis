@@ -180,7 +180,10 @@ The design of the terrain library allowed for easy integration with OMAN.  OMAN 
 \label{fig:terrain_color_schemes}
 \end{figure}
 
-Users can also choose what minimum and maximum elevation values to use when computing the color schemes.  They can choose to use the current terrains minimum and maximum values, the known highest and lowest terrain values in the United States, or the known highest and lowest terrain values in the world.  Once the terrain has been converted into a color coded height map it is ready for display.  In 2D this height map is simply turned into an image and used as a background on which the network layouts can be placed on top of.  Figures \ref{fig:oman_flow_graph_2D} shows an OMAN flow graph overlayed on top of a terrain region while Figure \ref{fig:oman_physical_graph_2D} shows an OMAN physical graph.  Visualizing the graph structures on top of a map of the terrain can give the users more insight into how and why the simulation acted as it did.  Users can visually see the terrain and can better understand how it has affected the simulation results.
+Users can also choose what minimum and maximum elevation values to use when computing the color schemes.  They can choose to use the current terrains minimum and maximum values, the known highest and lowest terrain values in the United States, or the known highest and lowest terrain values in the world.  Once the terrain has been converted into a color coded height map it is ready for display.  
+
+\paragraph{2D Visualization}
+In 2D this height map is simply turned into an image and used as a background on which the network layouts can be placed on top of.  Figures \ref{fig:oman_flow_graph_2D} shows an OMAN flow graph overlayed on top of a terrain region while Figure \ref{fig:oman_physical_graph_2D} shows an OMAN physical graph.  Visualizing the graph structures on top of a map of the terrain can give the users more insight into how and why the simulation produced its results.  An example of this would be in a simulated movement graph, where nodes simulate intelligently moving around a given arena, the addition of visual terrain data can show whether the node movements are logical when coping with terrain obstacles.
 
 \begin{figure}[ht]
 \centering
@@ -197,7 +200,57 @@ Users can also choose what minimum and maximum elevation values to use when comp
 \label{fig:oman_graphs_on_terrain}
 \end{figure}
 
-%can now move onto talking about 3D vis and showing images of that.  Explaining benefits of 3D vis.  able to better see the contours of the terrain.  visual objstructions become more apparent.  can better analyze movement patterns with movement graphs, etc.
+\paragraph{3D Visualization}
+Although 2D visualizations do provide useful information, looking at a height map is not always intuitive and does not always present all of the information.  The visualization of terrain really benefits from 3D visualization.  Just the added dimension does not provide all the potential benefits, the inclusion of interactivity in the 3D world provides the richest visualization for this data.  Figure \ref{fig:3d_terrain_overhead} shows a simple overhead view of a physical graph visualized on a given terrain arena in 3D.  Looking at this figure we don't get the sense we have gained much in going from 2D to 3D.  We still see a graph visualized on top of a terrain arena but now with the contours of the terrain and positioning of the nodes better visualized.
+
+\begin{figure}[ht]
+\centering
+  \includegraphics[scale=0.75]{images/network_vis/3D_terrain.eps}
+  \caption{Terrain visualization in 3D, overhead view}
+\label{fig:3d_terrain_overhead}
+\end{figure}
+
+The use of the available interactivity really shows the usefulness of this type of visualization.  In this visualization the user has complete control and freedom of movement with the camera.  The Figures \ref{fig:3d_terrain_closeup_1} and \ref{fig:3d_terrain_closeup_2} show two different perspectives of portions of the terrain from Figure \ref{fig:3d_terrain_overhead}.  These views are much easier to understand and comprehend than a 2d height map visualized under the plot of a graph.  The features of the terrain are easily distinguishable and the effects they have can be easily seen when we zoom into the environment.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/3d_terrain_closeup_1.eps}
+	\label{fig:3d_terrain_closeup_1}
+}
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/3d_terrain_closeup_2.eps}
+	\label{fig:3d_terrain_closeup_2}
+}
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/terrain_obstructions_2.eps}
+	\label{fig:3d_terrain_obstruction_2}
+}
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/terrain_obstructions_3.eps}
+	\label{fig:3d_terrain_obstruction_3}
+}
+  \caption{Figures showing a zoomed in view of portions of 3D terrain with portions of a physical graph visualized on top of them.}
+\label{fig:3d_terrain_closeups}
+\end{figure}
+
+An example of these effects is more clearly illustrated in Figures \ref{fig:3d_terrain_obstruction_2} and \ref{fig:3d_terrain_obstruction_3}.  In Figure \ref{fig:3d_terrain_obstruction_2} we can see nodes 2 and 3 are hidden behind elements of the terrain which may cause trouble in their connections with node 1.  We see a similar situation in Figure \ref{fig:3d_terrain_obstruction_3}.  These situations are not as easily identifiable when visualized in 2D.  Although one can zoom into a static 2d image, it is more difficult to interpret the exact values on a height map and try and draw conclusions that way.  Seeing these situations in 3D makes it quick and easy to directly see the result.
+
+One of the only troubles we encounter in the 3D view of this data is that when looking at the terrain at a whole it is easy for the nodes and edges to get lost in the details of the terrain.  To alleviate this problem, nodes and edges can be scaled up in size so that they are easily visible when the view is zoomed out.  This feature is illustrated in Figures \ref{fig:3d_terrain_node_scale}.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/3d_terrain_node_scale_1.eps}
+	\label{fig:3d_terrain_node_scale_1}
+}
+\subfigure[]{
+	\includegraphics[scale=0.40]{images/network_vis/3d_terrain_node_scale_2.eps}
+	\label{fig:3d_terrain_node_scale_2}
+}
+  \caption{\subref{fig:3d_terrain_node_scale_1} shows the nodes and edges at normal size.  \subref{fig:3d_terrain_node_scale_2} shows the nodes and edges scaled up for better visibility.}
+\label{fig:3d_terrain_node_scale}
+\end{figure}
 
 \section{Conclusion}
 a brief conclusion about our work on this topic.
