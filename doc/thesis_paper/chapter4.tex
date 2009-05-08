@@ -102,10 +102,32 @@ The GPU is also a very cost effective and readily available solution.  Almost ev
 
 
 \section{Experimental Setup}
-text about how we tested these algorithms
+All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU execution times were taken using the CUDA supplied timing methods.  Timings in Matlab were done using the tic and toc function calls native to matlab.
 
 \subsection{Test Platform}
-details about the computer used for execution.
+\label{sect:test_platform}
+The primary testing platform used was a desktop computer with the following specifications:
+\begin{itemize}
+\item \textbf{CPU:} Intel Core 2 Duo E7200
+	\begin{itemize}
+	\item CPU Speed: 2.53 GHz
+	\item Bus Speed: 1066 MHz
+	\item L1 Data Cache Size: 32KB x 2
+	\item L1 Inst. Cache Size: 32KB x 2
+	\item L2 Cache Size: 3MB
+	\end{itemize}
+\item \textbf{RAM:} 4GB DDR2 800 Dual Channel
+\item \textbf{Video Card:} Nvidia GeForce 9600 GT
+	\begin{itemize}
+	\item Memory: 512MB 256-bit GDDR3
+	\item Memory Clock: 1900MHz
+	\item Clock Speed: 700 MHz
+	\item Stream Processors: 64
+	\end{itemize}
+\item \textbf{Operating System:} Microsoft Windows XP with SP 3
+\end{itemize}
+
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was Microsoft Visual Studio 2005.  All Matlab timings were done using Matlab R2008a version 7.6.0.324.
 
 \subsection{Test Data}
 details about the data sets we used for testing these algorithms
