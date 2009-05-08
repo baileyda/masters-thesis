@@ -141,6 +141,8 @@ int main( int argc, char** argv )
 	long L = (long)(Np / 4.0);
 	long P = (long)(fs / dalpha / L);
 
+	assert(Np >= P);
+
 	//generate an Np point hamming window that will be applied
 	//to each channel pair region prior to applying an Np-point ffts
 	Complex* hamming_win;

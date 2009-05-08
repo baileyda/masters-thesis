@@ -218,11 +218,15 @@ __global__ void FAM_ComputeProdSeq(Complex* prod_seq, Complex* complex_demod, lo
 	Complex* block = (Complex*)buffer;
 
 	//each block of threads processes a common row, load this row into shared memory
-	for(int q = 0; q < P; q++)
-		block[q] = row1[q];
+	//each thread will load one element of this row into shared memory.  This assumes
+	//that Np is greater than P
+	if(col < P)
+		block[col] = row1[col];
 	__syncthreads();
 
-	ComplexMulConjVector(block, block, result1, P);
+	//now perform the computation of the product sequence using the same row1 for all threads
+	//but them a different row2 and result for each thread
+	ComplexMulConjVector(block, row2, result1, P);
 }
 
 //***********************************************************************************
@@ -254,27 +258,28 @@ __global__ void FAM_ComputeSCDFunction(float* Sx, Complex* prod_seq, long N, lon
 	long k1 = blockIdx.x * blockDim.x + threadIdx.x;
 	long k2 = blockIdx.y * blockDim.y + threadIdx.y;
 
-	if(k1 < P/2 && k2 < (Np*Np)) {
-		float l,k,p,alpha,f;
-		long kk, ll;
-		if(k2 % Np == 0)
-			l = Np/2-1;
-		else
-			l = (k2%Np) - Np/2.0 - 1.0;
+	float l,k,p,alpha,f;
+	long kk, ll;
 
-		k = ceil((float)k2/(float)Np) - Np/2.0 - 1.0;
-		p = k1 - P/4 - 1.0;
-		alpha = (k-l)/Np + (p-1)/L/P;
-		f = (k+l) / 2.0 / Np;
+	k1 = k1 + P/4;
 
-		if(alpha >= -1 && alpha <= 1 && f >= -.5 && f <= .5) {
-			kk = ceil(1 + Np * (f + .5));
-			ll = 1 + N * (alpha + 1);
-			
-			Complex temp = prod_seq[k2*P + (k1+P/4)];
+	if(k2 % Np == 0)
+		l = Np/2.0-1.0;
+	else
+		l = (k2%Np) - Np/2.0 - 1.0;
 
-			Sx[ll*Np + kk] = sqrt(temp.x * temp.x + temp.y * temp.y);
-		}
+	k = ceil((float)k2/(float)Np) - Np/2.0 - 1.0;
+	p = k1 - P/4 - 1.0;
+	alpha = (k-l)/Np + (p-1)/L/P;
+	f = (k+l) / 2.0 / Np;
+
+	if(alpha >= -1 && alpha <= 1 && f >= -.5 && f <= .5) {
+		kk = ceil(1 + Np * (f + .5));
+		ll = 1 + N * (alpha + 1);
+		
+		Complex temp = prod_seq[k2*P + (k1+P/4)];
+
+		Sx[ll*Np + kk] = sqrt(temp.x * temp.x + temp.y * temp.y);
 	}
 }
 
