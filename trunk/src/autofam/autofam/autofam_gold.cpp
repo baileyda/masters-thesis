@@ -19,9 +19,9 @@ extern "C" void loadFilter(char* filter, uint size, Complex* pData);
 
 extern "C" void writeData(Complex* pResult, char* output, uint size);
 
-extern "C" void writeMatrixData(float* pResult, char* output, long Np, long P);
+extern "C" void writeMatrixData(float* pResult, char* output, int num, long Np, long P);
 
-extern "C" void writeMatrixDataComplex(Complex* pResult, char* output, long Np, long P);
+extern "C" void writeMatrixDataComplex(Complex* pResult, char* output, int num, long Np, long P);
 
 void split(const string& str, vector<string>& splitStr, string delimiter);
 
@@ -191,7 +191,7 @@ void writeData(Complex* pResult, char* output, uint size) {
 	}
 }
 
-void writeMatrixData(float* pResult, char* output, long Np, long P)
+void writeMatrixData(float* pResult, char* output, int num, long Np, long P)
 {
 	cout << "Writing matrix data to a file...\n";
 	//open the given file for output
@@ -206,7 +206,14 @@ void writeMatrixData(float* pResult, char* output, long Np, long P)
 	ofstream outImag(imag.c_str());
 	*/
 
-	ofstream out(output);
+	char buffer[33];
+	string temp;
+	temp.assign(output);
+	temp.append("_");
+	_itoa(num, buffer, 10);
+	temp.append(buffer);
+	temp.append(".txt");
+	ofstream out(temp.c_str());
 
 	//if(outReal.is_open() && outImag.is_open()) {
 	if(out.is_open()) {
@@ -231,16 +238,24 @@ void writeMatrixData(float* pResult, char* output, long Np, long P)
 	}
 }
 
-void writeMatrixDataComplex(Complex* pResult, char* output, long Np, long P)
+void writeMatrixDataComplex(Complex* pResult, char* output, int num, long Np, long P)
 {
 	cout << "Writing matrix data to a file...\n";
 	//open the given file for output
+	char buffer[33];
+
 	string real;
 	real.assign(output);
-	real.append("_real.txt");
+	real.append("_real_");
+	_itoa(num, buffer, 10);
+	real.append(buffer);
+	real.append(".txt");
 	string imag;
 	imag.assign(output);
-	imag.append("_imag.txt");
+	imag.append("_imag_");
+	_itoa(num, buffer, 10);
+	imag.append(buffer);
+	imag.append(".txt");
 	ofstream outReal(real.c_str());
 	ofstream outImag(imag.c_str());
 	
