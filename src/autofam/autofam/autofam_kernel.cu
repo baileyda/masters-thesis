@@ -204,104 +204,26 @@ __global__ void FAM_DownConvert(Complex* complex_demod, int Np, int P, int L) {
 }
 
 //***********************************************************************************
-
+extern __shared__ Complex buffer[];
 __global__ void FAM_ComputeProdSeq(Complex* prod_seq, Complex* complex_demod, long Np, long P) {
-	long threadID = blockIdx.x * blockDim.x + threadIdx.x;
-	//long element = blockIdx.y * blockDim.y + threadIdx.y;
+	long row = blockIdx.x;
+	long col = threadIdx.x;
+	
+	Complex* row1 = complex_demod + row*P;
+	Complex* row2 = complex_demod + col*P;
 
-	if(threadID < (Np*Np - Np)/2){// && element < P) {
-		long count = 0;
-		long temp = threadID;
-		do{
-			count++;
-			temp = temp - (Np-count);
-		}while(temp >= 0);
+	Complex* result1 = prod_seq + (row*Np+col)*P;
+	Complex* result2 = prod_seq + (col*Np+row)*P;
 
-		temp += (Np-count);
+	Complex* block = (Complex*)buffer;
 
-		long row = count-1;
-		long col = temp + count;
+	//each block of threads processes a common row, load this row into shared memory
+	for(int q = 0; q < P; q++)
+		block[q] = row1[q];
+	__syncthreads();
 
-		if(row < Np-1 && col < Np) {
-			Complex* row1 = complex_demod + row*P;
-			Complex* row2 = complex_demod + col*P;
-
-			Complex* result1 = prod_seq + (row*Np+col)*P;
-			Complex* result2 = prod_seq + (col*Np+row)*P;
-
-			ComplexMulConjVector(row1, row2, result1, P);
-			ComplexMulConjVector(row2, row1, result2, P);
-
-			
-			//for(long q = 0; q < P; q++) {
-			//	result1[q] = ComplexMulConj(row1[q], row2[q]);
-			//	result2[q] = ComplexMulConj(row2[q], row1[q]);
-			//}
-			
-
-			//result1[element] = ComplexMulConj(row1[element], row2[element]);
-			//result2[element] = ComplexMulConj(row2[element], row1[element]);
-		}
-	}
+	ComplexMulConjVector(block, block, result1, P);
 }
-
-
-/*
-__global__ void FAM_ComputeProdSeq(Complex* prod_seq, Complex* complex_demod, long Np, long P) {
-	long i = blockIdx.x * blockDim.x + threadIdx.x;
-	long j = blockIdx.y * blockDim.y + threadIdx.y;
-	long k = blockIdx.z * blockDim.z + threadIdx.z;
-
-	if(i < Np && j < Np){// && k < P) {
-		//Complex* row1 = complex_demod + i*P;
-		//Complex* row2 = complex_demod + j*P;
-
-		//Complex* result = prod_seq + (i*Np+j)*P;
-
-		//result[k] = ComplexMulConj(row1[k], row2[k]);
-		for(long k = 0; k < P; k++) {
-		prod_seq[(i*Np+j)*P + k] = ComplexMulConj(complex_demod[i*P + k], complex_demod[j*P + k]);
-		}
-	}
-}
-*/
-
-//***********************************************************************************
-/*
-__global__ void FAM_ComputeProdSeqDiag(Complex* prod_seq, Complex* complex_demod, long Np, long P) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if(i < Np) {
-		Complex* row = complex_demod + i*P;
-
-		Complex* result = prod_seq + (i*Np+i) * P;
-
-		ComplexMulConjVector(row, row, result, P);
-		
-		//for(long q = 0; q < P; q++) {			
-		//	result[q] = ComplexMulConj(row[q], row[q]);
-		//}
-		
-	}
-}
-*/
-
-
-__global__ void FAM_ComputeProdSeqDiag(Complex* prod_seq, Complex* complex_demod, long Np, long P) {
-	int i = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-
-	if(i < Np && j < P) {
-		Complex* row = complex_demod + i*P;
-
-		Complex* result = prod_seq + (i*Np+i) * P;
-
-		//for(long q = 0; q < P; q++) {
-			result[j] = ComplexMulConj(row[j], row[j]);
-		//}
-	}
-}
-
 
 //***********************************************************************************
 __global__ void FAM_FFTShift_Horizontal(Complex* complex_demod, long Np, long P) {

@@ -22,13 +22,13 @@ extern "C"
 void writeData(Complex* pResult, char* output, uint size);
 
 extern "C"
-void writeMatrixData(float* pResult, char* output, long Np, long P);
+void writeMatrixData(float* pResult, char* output, int num, long Np, long P);
 
 extern "C"
-void writeMatrixDataComplex(Complex* pResult, char* output, long Np, long P);
+void writeMatrixDataComplex(Complex* pResult, char* output, int num, long Np, long P);
 
 ////////////////////////////Signal Processing functions/////////////////////////
-float* ComputeFAM(Complex* signal, Complex* window, long N, long Np, long P, long L, long & x, long & y);
+float* ComputeFAM(Complex* signal, Complex* window, long N, long Np, long P, long L, long & x, long & y, float & totalTime);
 Complex* ChannelizeSignal(Complex* signal, int signal_size, long Np, long P, long L);
 Complex* ComputeProductSequences(Complex* complex_demod, long Np, long P);
 
@@ -130,7 +130,8 @@ int main( int argc, char** argv )
 	printf("\tTotal time to load and decimate signal data: %f msec.\n\n\n", totalTime);
 	cutDeleteTimer(timer);
 
-	long N = signal_size;//new_signal_size;
+	long sig_portion = 2048;
+	long N = sig_portion;//signal_size;//new_signal_size;
 	float fs = 1.0 / 16.0;
 	long Np =(long)(N * fs);
 
@@ -158,17 +159,46 @@ int main( int argc, char** argv )
 	//release the coefficients vector, its no longer needed
 	cudaFree(hamming_win);
 
-	long x,y;
-	//Compute the spectral correlation density function of the given signal
-	float * gpuResult_f;
-	float * pResult_f;
-	gpuResult_f = ComputeFAM(gpuSignal, window, N, Np, P, L, x, y);
+
+	float time;
+	totalTime = 0;
+	int numIter = signal_size / sig_portion;
+	for(int q = 0; q < numIter; q++) {
+
+		Complex* tempSig;
+		CUDA_SAFE_CALL(cudaMalloc((void**) &tempSig, sig_portion * sizeof(Complex)));
+		//copy the signal data from host memory to gpu memory
+		cudaMemcpy(tempSig, gpuSignal+(q*sig_portion), sig_portion * sizeof(Complex), cudaMemcpyDeviceToDevice);
+
+		long x,y;
+		//Compute the spectral correlation density function of the given signal
+		float * gpuResult_f;
+		float * pResult_f;
+		gpuResult_f = ComputeFAM(tempSig, window, N, Np, P, L, x, y, time);
+		totalTime += time;
+		
+		cudaFree(tempSig);
+
+		if(gpuResult_f != NULL) {
+			cudaMallocHost((void**) &pResult_f, x * y * sizeof(float));
+			cudaMemcpy(pResult_f, gpuResult_f, x * y * sizeof(float), cudaMemcpyDeviceToHost);
+	
+			cudaFree(gpuResult_f);
+
+			//writeMatrixData(pResult_f, outFile, q+1, x, y);
+
+			cudaFreeHost(pResult_f);
+		}
+		printf("\n");
+	}
+
+	printf("Total time to process all segments of the signal = %f msecs\n\n", totalTime);
 
 	//release the window and signal data
 	cudaFree(window);
 	cudaFree(gpuSignal);
 
-
+/*
 	if(gpuResult_f != NULL) {
 		cudaMallocHost((void**) &pResult_f, x * y * sizeof(float));
 		cudaMemcpy(pResult_f, gpuResult_f, x * y * sizeof(float), cudaMemcpyDeviceToHost);
@@ -181,6 +211,7 @@ int main( int argc, char** argv )
 	//free up the allocated host memory
 	cudaFreeHost(pSignal);
 	cudaFreeHost(pResult_f);
+*/
 	
 	//terminate execution
 	//CUT_EXIT(argc, argv);
@@ -205,9 +236,9 @@ int main( int argc, char** argv )
  * Return:
  *		Complex*:				pointer to the resulting SCD matrix. Resides in GPU mem.
  ************************************************************************************/
-float* ComputeFAM(Complex* signal, Complex* window, long N, long Np, long P, long L, long & x, long & y) {
+float* ComputeFAM(Complex* signal, Complex* window, long N, long Np, long P, long L, long & x, long & y, float & totalTime) {
 	unsigned int timer;
-	float totalTime = 0;
+	totalTime = 0;
 	float temp;
 	cutCreateTimer(&timer);
 
@@ -298,9 +329,13 @@ float* ComputeFAM(Complex* signal, Complex* window, long N, long Np, long P, lon
 	Complex* complex_demod_T;
 	CUDA_SAFE_CALL(cudaMalloc((void**) &complex_demod_T, P * Np * sizeof(Complex)));
 
-	//setup execution parameters for the transpose
-    dim3 threads2(16, 16, 1);
-	dim3 grid2(Np / threads2.x, P / threads2.y, 1);
+
+	//setup execution parameters for matrix transposition
+	unsigned int size_x = Np + (BLOCK_DIM-(Np%BLOCK_DIM));
+	unsigned int size_y = P + (BLOCK_DIM-(P%BLOCK_DIM));
+
+	dim3 grid2(size_x / BLOCK_DIM, size_y / BLOCK_DIM, 1);
+	dim3 threads2(BLOCK_DIM, BLOCK_DIM, 1);
 	//perform the matrix transpose
 	transpose<<<grid2,threads2>>>(complex_demod_T, complex_demod_w, Np, P);
 	CUDA_SAFE_THREAD_SYNC();
@@ -431,46 +466,30 @@ Complex* ComputeProductSequences(Complex* complex_demod, long Np, long P) {
 	long Np2 = Np*Np;
 	CUDA_SAFE_CALL(cudaMalloc((void**) &prod_seq, P * Np2 * sizeof(Complex)));
 	cudaMemset(prod_seq, 0, P*Np2*sizeof(Complex));
-
-	/*
-	FAM_ComputeProdSeqDiag<<<Np/16, 16>>>(prod_seq, complex_demod, Np, P);
-	CUDA_SAFE_THREAD_SYNC();
-	*/
 	
+	/*
+	//dim3 threads1(16);
+	//dim3 blocks1(Np/16);
 	dim3 threads1(16, 16);
-	dim3 blocks1(Np, P/16);
+	dim3 blocks1(Np/16, P/16);
 	FAM_ComputeProdSeqDiag<<<blocks1, threads1>>>(prod_seq, complex_demod, Np, P);
 	CUDA_SAFE_THREAD_SYNC();
 	
-/*
-	dim3 threads(16,16);
-	dim3 blocks(Np/16, Np/16);
-	FAM_ComputeProdSeq<<<blocks, threads>>>(prod_seq, complex_demod, Np, P);
-	CUDA_SAFE_THREAD_SYNC();
-*/
-
 	
 	long size = (Np*Np - Np)/2;
-	long size2 = size / 2;
-
-	dim3 threads(16,16);
-	dim3 blocks(size/threads.x, P/threads.x);
-	//dim3 threads((uint)ceil((float)size/(float)Np));
-	//dim3 blocks(Np);
-
-	FAM_ComputeProdSeq<<<blocks, threads>>>(prod_seq, complex_demod, Np, P);
-	CUDA_SAFE_THREAD_SYNC();
-	
-
-	/*
-	long size = (Np*Np - Np)/2;
-
-	dim3 threads2((uint)ceil((float)size/(float)Np), 16);
-	dim3 blocks2(Np, P/16);
+	//dim3 threads2((uint)ceil((float)size/(float)Np), 16);
+	//dim3 blocks2(Np, P/16);
+	dim3 threads2((uint)ceil((float)size/(float)(Np*2)));
+	dim3 blocks2(Np*2);
 
 	FAM_ComputeProdSeq<<<blocks2, threads2>>>(prod_seq, complex_demod, Np, P);
 	CUDA_SAFE_THREAD_SYNC();
 	*/
+
+	dim3 threads(Np);
+	dim3 blocks(Np);
+	FAM_ComputeProdSeq<<<blocks, threads, P * sizeof(Complex)>>>(prod_seq, complex_demod, Np, P);
+	CUDA_SAFE_THREAD_SYNC();
 
 	return prod_seq;
 }
