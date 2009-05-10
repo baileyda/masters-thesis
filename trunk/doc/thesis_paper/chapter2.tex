@@ -1,8 +1,12 @@
-\chapter{Ad Hoc Network Visualization}
+\chapter{Mobile Ad Hoc Network Visualization}
 \label{chap:network_vis}
 
 \section{Introduction}
+The process of visualizing mobile ad hoc networks is a particularly important and challenging task. This is due to the fact that these types of networks are highly dynamic and maintain no fixed structure.  The simulation of these networks is a complex process that has many different layers to understand and monitor.  Visualizing information about the different layers and parameters used in simulation can help improve the understanding of these networks and the simulated results.
 
+In this chapter we present two different visualizations.  First we present a method of visualizing signal radiation patterns at the physical layer of the network model.  These radiation patterns originate from transmitting nodes and are used to indicate how strong their signal is in the areas surrounding them.  This pattern can be affected by a number of things such as interference from other transmitting nodes in the vicinity.  Properly visualizing these radiation patterns can help us understand the effects of various parameter selections on network performance.
+
+We then present the use of digital terrain to enhance the visualization and simulation of ad hoc mobile networks.  A discussion of a library for handling digital terrain data is given, as well as how this library is integrated into the mobile ad hoc network simulator OMAN.  The visualization options this new library offers are also discussed.
 
 \section{Related Work}
 The technical literature on the visualization of ad hoc networks is significantly limited. To the best of our knowledge, existing work is restricted to small-scale examples that focus more on the attainment of the data that is visualized and less on the clarity, quality, and richness of information contained in the visual output \cite{DhoVoGue03}. Connectivity is a critical metric for performance of ad hoc networks, and is easy to visualize, even as the size of the network scales up. Therefore, most larger scale visual information processing efforts in the networking and visualization literature are focused on connectivity, such as in \cite{Bettsetetter04, HamWij04, BecEicWil95, HerMelMar00}. On the other hand, tools that allow for the visualization of other aspects of the communication medium can only handle small scale networks, both in terms of running-time complexity and visual complexity; \cite{FitSeeRei04, MatBieLau05, EstHanHei00} are popular examples of such tools.
@@ -254,9 +258,10 @@ One of the only troubles we encounter in the 3D view of this data is that when l
 \end{figure}
 
 \section{Conclusion}
-a brief conclusion about our work on this topic.
+In this chapter we have discussed two network visualizations that have been implemented in the OMAN adhoc wireless network simulator.  First, we have shown a method for providing a visual representation of the signal radiation patterns of transmitting nodes.  Along with this we have provided a visual representation of the regions of acceptably high SINR which allow a feasible channel to exist.  Each of these visualizations are done for both certain and uncertain environments.
+
+Our second visualization presented is the use of digital terrain data to improve the visualization of network simulation results.  We started by discussing the terrain library that was implemented in support of adding digital terrain data into OMAN.  With that we then discussed the different 2D and 3D visualization options this then added to OMAN.
 
 \section{Future Work}
-the development of further methods of visualizing other layers of the network model.
-develop more interactivity with the 3D displays of network simulations results.
-create real-time visualization of the network simulator
+In future work we hope to develop further methods of meaningfully visualizing other layers of the network model.  The integration of different visualizations together would also be a worth while exploration.  The display of the signal radiation patterns overlayed onto the 3D display of the network with its terrain could help to reveal further information about the simulation results.  We would also like to further develop the interactivity of the 3D displays.
+
