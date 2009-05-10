@@ -1,5 +1,5 @@
 \chapter{GPU Based Algorithms for Spectrum Sensing in Cognitive Radio Networks}
-
+\label{chap:cognet_gpu}
 \section{Introduction}
 
 
@@ -10,6 +10,60 @@ Discuss work done on performing the FAM algorithm on the cell processor.
 Discuss lack of previous work on porting cognitive networking algorithms onto the GPU architecture.
 
 
+\section{Why Use the GPU?}
+The GPU is a highly parallelized, multi-threaded, multi-cored processor.  The GPU is well suited to address problems that can be expressed as data-parallel computations - the same program executing on many data elements in parallel - with high arithmetic intensity \cite{Nvidia08}.  A single GPU is capable of computing thousands of threads simultaneously with incredibly optimized performance for high precision floating point operations.  Figure \ref{fig:cpu_vs_gpu_arch} illustrates the difference in architecture between CPUs and GPUs.  Since GPUs are specialized for data parallelism, they have a lower requirement for flow control and memory access latency can be hidden with high intensity calculations instead of data caches \cite{Nvidia08}.  
+
+%should use some of the diagrams from the Nvidia CUDA Programming Guide
+\begin{figure}[ht]
+\begin{center}
+ \scalebox
+ {0.80} % h_length
+ {
+ \includegraphics[angle=270,scale=0.5]{images/gpu_images/cpu_vs_gpu_arch.eps}
+ }
+\end{center}
+\caption{Basic diagrams comparing the differences in the architectures between a CPU and a GPU.  The GPU clearly devotes more transistors to data processing \cite{Nvidia08}.}
+\label{fig:cpu_vs_gpu_arch}
+\end{figure}
+
+Ultimately this difference in architecture translates to higher throughput of floating point operations per second.  Figure \ref{fig:cpu_vs_gpu_gflops} shows a comparison of different GPU cores vs different CPU cores over a given time line.  The comparison shows the growth in peak performance measured in GFLOPS.  We can clearly see that GPU's peak performance has grown significantly higher than that of any CPU currently on the market.  This makes the GPU seem like the ideal platform on which to perform large scale complex computations.
+
+\begin{figure}[ht]
+\begin{center}
+ \includegraphics[scale=0.65]{images/gpu_images/cpu_vs_gpu_gflops.eps}
+\end{center}
+\caption{Graph showing a comparison of growth in peak performance between GPU's and CPU's over a given time line \cite{Nvidia08}.}
+\label{fig:cpu_vs_gpu_gflops}
+\end{figure}
+
+%Not sure this fits in this section or maybe just this location, see if it can be moved or needs to be removed.
+Through NVIDIA's CUDA computing engine, the massively parallel structure of GPU's can be harnessed for general purpose computing.  CUDA provides extensions to industry standard languages, such as C and Python, to access the parallel computing capabilities of NVIDIA based GPU's.  CUDA provides a set of three key abstractions - a hierarchy of thread groups, shared memory, and barrier synchronization - that are exposed to the programmer through these language extensions \cite{Nvidia08}.
+
+\subsection{Application to Cognitive Networking}
+Cognitive networking algorithms rely on extremely fast computations of large sets of complex data in order to provide the necessary real time requirements for performance.  In many cases, these computations can take advantage of parallel computing architectures, such as those offered by GPUs, to help increase their performance.
+
+One of the primary operations relied upon by many of the cognitive networking algorithms is the computation of Fast Fourier Transformations (FFT)  This is a common operation in many signal processing algorithms and is one that can benefit from a high degrees of parallelism.  Algorithms such as the FFT Accumulation Method (\ref{sect:FAM}) make heavy use of FFT's, so a fast implementation can make a big difference in the algorithms overall performance.  Figure \ref{fig:matlab_vs_gpu_fft_timings} shows a comparison of computation times for FFT's of varying size using Matlab and using CUDA for GPU execution.  The CUDA computations times include the necessary time to transfer the signal data from host memory (RAM) into device memory (GPU RAM).  Please see section \ref{sect:test_platform} for details on the testing platform used to generate these results.
+
+\begin{figure}[ht]
+\begin{center}
+ \includegraphics[angle=270,scale=0.6]{images/gpu_images/matlab_vs_cuda_fft_timings.eps}
+\end{center}
+\caption{Graph showing a comparison of computations times for FFT's of varying sizes in Matlab and on a GPU.}
+\label{fig:matlab_vs_gpu_fft_timings}
+\end{figure}
+
+In analyzing this graph we can see as the size of the FFT increases, Matlab hits a point where computations times grow exponentially while computations on the GPU continue to grow in a slow linear fashion.  This crossover point occurs at sizes of $N = 2^13 = 8192$ and greater.  Signal data containing this many discrete points is not out of the question, especially when performing wide-band spectrum sensing.  
+
+At the same time this graph exposes a weakness of computing on the GPU.  At sizes below the switching threshold, the GPU's performance has a floor which is does not go below.  This is because of the overhead associated with a) transferring the data from host memory to device memory, b) setting up the necessary framework for parallel computation.  Regardless of the amount of data being processed these factors are always present. Therefore to negate the computation overhead gained from these factors the GPU should be saturated with as much data as possible in order to see the most benefit from its massively parallel architecture.  At sizes below $N = 8192$ the GPU was simply not receiving enough data to negate the computation overhead.
+
+Despite this weakness if using the GPU for computations, as mentioned previously, the need to process large amounts of signal data is not uncommon.  Therefore when performing more wide-band operations, the GPU will likely still have a strong upper hand over traditional CPU computations.
+
+\subsection{Availability and Cost Effectiveness}
+The GPU is also a very cost effective and readily available solution.  Almost every desktop, and even some laptop computers, sold today have some version of a GPU residing in them.  Even those desktop computers without a GPU can easily add them one to its setup, and at a fairly reasonable price too.  
+
+Although cell processors are also very powerful and highly parallelizable, they are not yet as widely available as GPU's in everyday computing devices.  The only commercially available device with a cell processor is the Sony Playstation 3.  It is possible to use the cell processor in the Playstation 3 for general purpose computing, as evidenced by the work done in \cite{FenChenWan08}, but it requires the purchase and presence of the entire Playstation 3 hardware setup.  It may not be feasible or desirable to have an extra hardware piece such as the Playstation 3 tied to a real world cognitive radio.  From both a cost and availability standpoint, GPU's are an excellent choice for adapting cognitive networking algorithms.
+
+
 \section{Spectrum Sensing Algorithms}
 The cognitive networking model assumes two kinds of users, primary and secondary users.  Primary users are those who have privileged rights to a licensed spectrum for their commercial or public usage.  Secondary users are those users who do not have privileged rights but still have access to licensed spectrums.  These secondary users must opportunistically use unallocated spectrum resources when they are available, but vacate those resources when a primary user desires access to them.  In order to facilitate the intelligent usage of unallocated resources, secondary users must have a means of detecting the unused portions of a spectrum.  Spectrum sensing algorithms are designed to quickly and accurately detect the unoccupied spectrum segments available for use by secondary users.
 
@@ -17,7 +71,25 @@ There are several methods available to perform this kind of detection.  Each met
 
 \subsection{Energy Detection}
 \label{sect:energy_detect}
-One method available to perform spectrum sensing is through the use of energy detection methods.
+One of the potential methods available to perform spectrum sensing is through the use of an energy detector.  Energy detection is typically used to detect a weak deterministic signal in additive noise, which is assumed to be additive, white, and Gaussian \cite{CabTkaBro06}.  The energy detector works by measuring the energy in the received waveform over an observation time window \cite{CabTkaBro06}.
+
+Energy detectors by nature have to be suboptimal.  This is due to the fact that in order to be optimal the detector would need to be based on a matched filter, thus requiring \textit{a priori} knowledge of the data for coherent processing \cite{CabTkaBro06}.  Knowing this, there are two possible ways of computing our suboptimal energy detector.  The first method uses a conventional energy detector which consists of the following parts: a low pass filter, a Nyquist sampling A/D converter, and a square-law device and integrator \cite{CabTkaBro06}.  Figure \subref{fig:energy_detect_a} provides a block diagram of this method.  The second method is devised through the use of a periodogram to estimate the spectrum via the squared magnitude of the FFT of the signal \cite{CabTkaBro06}.  Figure \subref{fig:energy_detect_b} illustrates a block diagram for this method.
+
+\begin{figure} [ht]
+%\begin{center}
+\centering
+	\subfigure[]{
+		\includegraphics[scale=0.45]{images/gpu_images/energy_detector_a.eps}
+		\label{fig:energy_detect_a}
+	}
+	\subfigure[]{
+		\includegraphics[scale=0.45]{images/gpu_images/energy_detector_b.eps}
+		\label{fig:energy_detect_b}
+	}
+%\end{center}
+\caption{Two possible implementations of an energy detector.  \subref{fig:energy_detect_a} uses an analog pre-filter and square-law device.  \subref{fig:energy_detect_b} uses periodogram: FFT magnitude squared and averaging. Image sourced from \cite{CabTkaBro06}}
+\label{fig:energy_detect}
+\end{figure}
 
 \subsection{Cyclostationary Spectral Analysis}
 \label{sect:cyclo}
@@ -49,60 +121,8 @@ The algorithm then occurs in three steps.  First the channelization is performed
 The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences of step 2 and during step three the $P$-point FFT's can be applied independently to each of the product sequences.  This very high level of data-parallelism combined with the high level of computation makes this algorithm a strong candidate for GPU based processing.
 
 
-\section{Why Use the GPU?}
-The GPU is a highly parallelized, multi-threaded, multi-cored processor.  The GPU is well suited to address problems that can be expressed as data-parallel computations - the same program executing on many data elements in parallel - with high arithmetic intensity \cite{Nvidia08}.  A single GPU is capable of computing thousands of threads simultaneously with incredibly optimized performance for high precision floating point operations.  Figure \ref{fig:cpu_vs_gpu_arch} illustrates the difference in architecture between CPUs and GPUs.  Since GPUs are specialized for data parallelism, they have a lower requirement for flow control and memory access latency can be hidden with high intensity calculations instead of data caches \cite{Nvidia08}.
-
-%should use some of the diagrams from the Nvidia CUDA Programming Guide
-\begin{figure*}[htp]
-\begin{center}
- \scalebox
- {0.80} % h_length
- {
- \includegraphics[angle=270,scale=0.5]{images/gpu_images/cpu_vs_gpu_arch.eps}
- }
-\end{center}
-\caption{\label{fig:cpu_vs_gpu_arch}
-Basic diagrams comparing the differences in the architectures between a CPU and a GPU.  The GPU clearly devotes more transistors to data processing \cite{Nvidia08}.
-}
-\end{figure*}
-
-%Not sure this fits in this section or maybe just this location, see if it can be moved or needs to be removed.
-Through NVIDIA's CUDA computing engine, the massively parallel structure of GPU's can be harnessed for general purpose computing.  CUDA provides extensions to industry standard languages, such as C and Python, to access the parallel computing capabilities of NVIDIA based GPU's.  CUDA provides a set of three key abstractions - a hierarchy of thread groups, shared memory, and barrier synchronization - that are exposed to the programmer through these language extensions \cite{Nvidia08}.
-
-\subsection{Application to Cognitive Networking}
-Cognitive networking algorithms rely on extremely fast computations of large sets of complex data in order to provide the necessary real time requirements for performance.  In many cases, these computations can take advantage of parallel computing architectures, such as those offered by GPUs, to help increase their performance.
-
-One of the primary operations relied upon by many of the cognitive networking algorithms is the computation of Fast Fourier Transforms.  This is a common operation in many signal processing algorithms and is one that can benefit from high degrees of parallelism.  Table \ref{tbl:matlab_vs_gpu_fft} shows a comparison of computation times for FFT's of various size using Matlab and using CUDA.  It is clear that CUDA is able to perform this operation much faster than  Matlab as the size of the FFT increases.  Algorithms such as the FFT Accumulation Method (\ref{sect:FAM}) make heavy use of this operation so a fast implementation can make a big difference in the algorithms overall performance.
-
-%need to get the matlab vs gpu fft timings from Boris
-\begin{table*}
-\begin{center}
-\begin{tabular}{|l|l|l|l|l|}
-\hline
- & \multicolumn{2}{|c|}{Citation Graph} & \multicolumn{2}{|c|}{Inet4500} \\
-\hline
-Metric & Weight Range & Ratio & Weight Range & Ratio \\
-\hline
-1-Ring& 1 to 75 & 0.0721 & 1 to 942 & 0.2093 \\
-2-Ring & 2 to 380 & 0.3687 & 2 to 3585 & 0.79667 \\
-3-Ring & 3 to 763 & 0.7414  & 3 to 4432 & 0.9842 \\
-Shortest Path & 0 to 85284 & 83.2039 & 0 to 12926842 & 2872.6315 \\
-Dist to Leaf & 0 to 7 & 0.0068 & 0 to 4 & 0.0008 \\
-Dist to Center & 1 to 10 & 0.0087 & 1 to 6 & 0.0011 \\
-Eccentricity & 9 to 17 & 0.0087 & 5 to 9 & 0.0008 \\
-\hline
-\end{tabular}
-\caption{This table lists the Weight Range to \# of Nodes ratios for each metric and each graph they were run against.}
-\label{tbl:matlab_vs_gpu_fft}
-\end{center}
-\end{table*}
-
-\subsection{Availability and Cost Effectiveness}
-The GPU is also a very cost effective and readily available solution.  Almost every desktop, and even some laptop computers, sold today have some version of a GPU residing in them.  Even those desktop computers without a GPU can add them in easily and at a fairly reasonable price.  Although cell processors are also very powerful and highly parallelizable, they are not yet as widely available as GPU's in everyday computing devices.  The only commercially available device with a cell processor is the Sony Playstation 3.  It is possible to use the cell processor in the Playstation 3 for general purpose computing, but it requires the purchase of and presence of the entire Playstation 3 hardware setup.  From both a cost and availability standpoint, GPU's are an excellent choice for adapting cognitive networking algorithms.
-
-
 \section{Experimental Setup}
-All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU execution times were taken using the CUDA supplied timing methods.  Timings in Matlab were done using the tic and toc function calls native to matlab.
+All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using the CUDA supplied timing methods.  Timings in Matlab were done using the tic and toc function calls native to Matlab.
 
 \subsection{Test Platform}
 \label{sect:test_platform}
@@ -127,7 +147,7 @@ The primary testing platform used was a desktop computer with the following spec
 \item \textbf{Operating System:} Microsoft Windows XP with SP 3
 \end{itemize}
 
-All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was Microsoft Visual Studio 2005.  All Matlab timings were done using Matlab R2008a version 7.6.0.324.
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was Microsoft Visual Studio 2005.  All Matlab code was run using Matlab R2008a version 7.6.0.324.
 
 \subsection{Test Data}
 details about the data sets we used for testing these algorithms
@@ -147,3 +167,5 @@ section specifically for our results relating to the performance of the FAM meth
 
 \section{Conclusion}
 a brief conclusion about our work on this topic.
+
+\section{Future Work}

@@ -1,4 +1,5 @@
-\chapter{Graph Simplification}
+\chapter{A Simplification Algorithm for Visualizing the Structure of Complex Graphs}
+\label{chap:graph_simp}
 \section{Introduction} 
 Graphs are used to represent and analyze a variety of data sets, from computer network topologies, to cancer cell structures, to research paper citation trends.  Graphs are a useful representation for these types of data, because they naturally provide a clear and distinct way of visualizing the data sets and the interrelationships contained within them.  These data sets are becoming larger and larger, and thus their visual representations are becoming too complex and cluttered.  Graphs frequently have hundreds or thousands of nodes.  Displaying all of these nodes and edges to a user provides no real benefit, since the density and complexity of the graph overwhelms and fills standard displays due to resolution limitations.  Graph simplification provides one way of making these graphs easily comprehensible while not removing the actual meaning or structure of the graphs.
 
@@ -128,20 +129,16 @@ The final criteria for an effective metric is that these two properties should b
 
 \begin{figure*}[htp]
 \begin{center}
-%\includegraphics[width=3.3in]{images/citation_graph_node_drop_off.eps}
-%\includegraphics[width=3.3in]{images/inet4500_node_drop_off.eps}
  \scalebox
  {0.80} % h_length
  {
  \includegraphics{images/citation_graph_node_drop_off.eps}
-% \includegraphics{images/citation_graph_node_drop_off.pdf}
  }
  
  \scalebox
  {0.80}
  {
  \includegraphics{images/inet4500_node_drop_off.eps}
-% \includegraphics{images/inet4500_node_drop_off.pdf}
  }
 \end{center}
 \caption{\label{fig:node_drop_off}
