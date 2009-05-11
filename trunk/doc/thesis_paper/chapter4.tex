@@ -115,14 +115,14 @@ X_{N^\prime}(n,f) = \sum_{n=0}^{N^\prime - 1} w(n) x(n) e^{-(i 2 \pi f n)/N^\pri
 
 Here \begin{math}w(n)\end{math} is a data tapering window (e.g., Hamming window), L is a decimation factor in the frequency domain \cite{FenChenWan08}, P is equal to \begin{math}N / L \end{math} where $N$ is the total number of samples in the signal and $N^\prime$ is equal to the number of samples in each complex demodulate.  In choosing the value of \begin{math}N^\prime \end{math} we must consider that the time-frequency resolution product \begin{math}N/N^\prime\end{math} must satisfy the condition \begin{math}N/N^\prime >> 1\end{math} in order to have a statistically reliable measurement \cite{RobBroLoo91}.  The value of $L$ is typically chosen to be \begin{math}L \le N^\prime / 4\end{math} in order to provide a good compromise between computational efficiency and minimizing cycle leakage and aliasing \cite{RobBroLoo91}.
 
-The algorithm then occurs in three steps.  First the channelization is performed by an $N^\prime$-point FFT being hopped over the signal data in blocks of $L$ samples.  The results from the FFT are then frequency shifted to baseband.  This produces the decimated complex demodulates \cite{RobBroLoo91}.  Second the product sequences are computed.  These are computed by multiplying each complex demodulate by the complex conjugate of each of the others \cite{Costa96}.  Once these are computed a $P$-point FFT is applied.
+The algorithm then occurs in three steps.  First the channelization of the input signal is performed by an $N^\prime$-point FFT being hopped over the signal data in blocks of $L$ samples.  The results from the FFT are then frequency shifted to baseband.  This produces the decimated complex demodulates \cite{RobBroLoo91}.  Second the product sequences are computed.  These are computed by multiplying each complex demodulate by the complex conjugate of each of the others \cite{Costa96}.  Once these are computed a $P$-point FFT is applied to each product sequence value.  The final step is to reorder the data from the product sequence such that it is ordered by cycle frequency vs frequency.
 
 %Maybe break this section off into a section below on the GPU's applicability to cognitive networking.
-The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences of step 2 and during step three the $P$-point FFT's can be applied independently to each of the product sequences.  This very high level of data-parallelism combined with the high level of computation makes this algorithm a strong candidate for GPU based processing.
+The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences and applying the $P$-point FFT's to each of the product sequences.  This very high level of data-parallelism combined with the large amount of computation necessary makes this algorithm a strong candidate for GPU based processing.
 
 
 \section{Experimental Setup}
-All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using the CUDA supplied timing methods.  Timings in Matlab were done using the tic and toc function calls native to Matlab.
+All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using CUDA supplied timing methods called from within the CUDA code.  Timings in Matlab were done using the tic and toc function calls native to Matlab.
 
 \subsection{Test Platform}
 \label{sect:test_platform}
@@ -147,7 +147,7 @@ The primary testing platform used was a desktop computer with the following spec
 \item \textbf{Operating System:} Microsoft Windows XP with SP 3
 \end{itemize}
 
-All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was Microsoft Visual Studio 2005.  All Matlab code was run using Matlab R2008a version 7.6.0.324.
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.
 
 \subsection{Test Data}
 details about the data sets we used for testing these algorithms
@@ -159,11 +159,28 @@ section outlining our experimental findings
 
 \subsection{Energy Detection}
 \label{sect:energy_detect_result}
-section specifically for our results relating to the performance of the energy detection method.  Include timings of calculations on matlab implementation and on the gpu.  compare generated results between both versions.  possibly compare these results against those found in other papers.
+As discussed in Section~\ref{sect:energy_detect}, there are two possible versions of an energy detector we can implement.  We have implemented both and 
 
 \subsection{FFT Accumulation Method}
 \label{sect:FAM_result}
-section specifically for our results relating to the performance of the FAM method.  Include timings of calculations on matlab implementation and on the gpu.  compare generated results between both versions.  possibly compare these results against those found in other papers.
+A full Matlab based implementation of the FFT Accumulation Method was provided by \cite{Costa96}.  This code was used as a basis for the development of our GPU based implementation of the FFT Accumulation Method.  The code from \cite{Costa96} was directly ported into CUDA for implementation on the GPU.  Optimizations were made to the CUDA code such that we could efficiently harness the parallelized architecture of the GPU.  We strove to maintain the same basic set of operations with the only difference between the two code bases being optimizations for running on a GPU.  This was done so that we could perform a solid comparison of the effectiveness of the GPU execution times versus on the CPU.
+
+\begin{table*}
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+N & Matlab & CUDA \\
+\hline
+1024& 70.62 & 6.68 \\
+2048 & 278.45 & 13.19 \\
+4096 & 1183.94 & 39.13 \\
+8192 & 4696.60 & 150.21 \\
+\hline
+\end{tabular}
+\caption{Shows the timings taken during the execution of the FFT Accumulation Method in Matlab and executing on the GPU.}
+\label{tbl:fam_timings}
+\end{center}
+\end{table*}
 
 \section{Conclusion}
 a brief conclusion about our work on this topic.
