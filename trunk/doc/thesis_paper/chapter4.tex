@@ -1,9 +1,14 @@
 \chapter{GPU Based Algorithms for Spectrum Sensing in Cognitive Radio Networks}
 \label{chap:cognet_gpu}
 \section{Introduction}
+%still need one or two opening paragraphs on building up to the intro to our work.
 
+The goal of our work here is to implement well defined methods of spectrum sensing on a new computing architecture, a programming Graphics Processing Unit (GPU).  We show that this computing architecture greatly improves the performance of these spectrum sensing algorithms both in terms of run times as well as amount of complex computational work they can achieve in a reasonable time.  In Section~\ref{sect:gpu_related_work} we discuss some of the related work around improving the performance of spectrum sensing algorithsm.  
+
+This paper is organized as follows: Section~\ref{sect:gpu_why_use_gpu} discusses why the GPU is a viable computing architecture for improving the performance of spectrum sensing algorithms.  Section~\ref{sect:gpu_spect_sensing_algos} then presents the algorithms we consider for implementation on the GPU.  In Sections \ref{sect:gpu_experiment} and \ref{sect:gpu_results} we present the testing environment, test data used, and the results we gathered from the comparison of running these algorithms on the CPU vs the GPU.  Sections \ref{sect:gpu_conclusion} and \ref{sect:gpu_future_work} then closes with our conclusions on our findings and a short discussion of our future work.
 
 \section{Related Work}
+\label{sect:gpu_related_work}
 The literature surrounding the topic of spectrum sensing in cognitive networks is very broad.  Several different works have focused on means of improving the performance of existing spectrum sensing algorithms.  The work done in \cite{HurParWoo06} and \cite{QuaCuiSay08} focus on algorithms for wide-band spectrum sensing.  These algorithms focus on detecting spectral holes in multiple sub-channels in a single pass of an algorithm rather than searching for spectral holes one sub-channel at a time.
 
 Further work has focused on the development of co-operative spectrum sensing techniques, such as the work done in \cite{GanLi05} and \cite{SadAzm08}.  Co-operative based spectrum sensing aims to improve the performance and reliability of spectrum detection by having multiple nodes in the network work together in detecting spectral holes.  These methods have been shown to improve performance but have not considered the possibility of using a different computing architecture to further improve performance.
@@ -13,6 +18,7 @@ The work done in \cite{OshClaEbe07} and \cite{FenBos07} have aimed to improve th
 Overall the literature has shown many ways in which to increase the performance of spectrum sensing algorithms.  Yet no one has yet made an attempt to port these algorithms onto a General Purpose Graphics Processing Unit (GPGPU).  The novelty of our work here is showing how several of these algorithms can be ported to the GPU, and to show the performance gains achieved by doing so.
 
 \section{Why Use the GPU?}
+\label{sect:gpu_why_use_gpu}
 The GPU is a highly parallelized, multi-threaded, multi-cored processor.  The GPU is well suited to address problems that can be expressed as data-parallel computations - the same program executing on many data elements in parallel - with high arithmetic intensity \cite{Nvidia08}.  A single GPU is capable of computing thousands of threads simultaneously with incredibly optimized performance for high precision floating point operations.  Figure \ref{fig:cpu_vs_gpu_arch} illustrates the difference in architecture between CPUs and GPUs.  Since GPUs are specialized for data parallelism, they have a lower requirement for flow control and memory access latency can be hidden with high intensity calculations instead of data caches \cite{Nvidia08}.  
 
 %should use some of the diagrams from the Nvidia CUDA Programming Guide
@@ -70,6 +76,7 @@ Although cell processors are also very powerful and highly parallelizable, they 
 
 
 \section{Spectrum Sensing Algorithms}
+\label{sect:gpu_spect_sensing_algos}
 The cognitive networking model assumes two kinds of users, primary and secondary users.  Primary users are those who have privileged rights to a licensed spectrum for their commercial or public usage.  Secondary users are those users who do not have privileged rights but still have access to licensed spectrums.  These secondary users must opportunistically use unallocated spectrum resources when they are available, but vacate those resources when a primary user desires access to them.  In order to facilitate the intelligent usage of unallocated resources, secondary users must have a means of detecting the unused portions of a spectrum.  Spectrum sensing algorithms are designed to quickly and accurately detect the unoccupied spectrum segments available for use by secondary users.
 
 There are several methods available to perform this kind of detection.  Each method is suited to different types of environments and signal types.  We have chosen to target two methods for this paper, energy detection and cyclostationary spectral analysis.
@@ -127,6 +134,7 @@ The parallelism of this algorithm is a direct result of the independence of the 
 
 
 \section{Experimental Setup}
+\label{sect:gpu_experiment}
 All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using CUDA supplied timing methods called from within the CUDA code.  Timings in Matlab were done using the \textit{tic} and \textit{toc} function calls native to Matlab.
 
 \subsection{Test Platform}
@@ -152,7 +160,8 @@ The primary testing platform used was a desktop computer with the following spec
 \item \textbf{Operating System:} Microsoft Windows XP with SP 3
 \end{itemize}
 
-All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.  Matlab did have its multi-threading options enabled which allows Matlab to automatically multi-thread some of its built in computations such as FFTs.  No explicit multi-threaded programming was done within Matlab.
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.  Matlab did have its multi-threading options enabled.  This allows Matlab to automatically multi-thread some of its built in computations such as FFTs.  No explicit multi-threaded programming was done within the Matlab code due to the lack of the Matlab Multi-Processing Toolbox.
+%find the name of the matlab multi-threading toolbox.
 
 \subsection{Test Data}
 details about the data sets we used for testing these algorithms
@@ -160,6 +169,7 @@ details about the data sets we used for testing these algorithms
 
 
 \section{Results}
+\label{sect:gpu_results}
 This section outlines our experimental findings on the timing differences between standard CPU based implementations in Matlab versus the same implementation done on the GPU using NVidia CUDA.
 
 \subsection{Energy Detection}
@@ -260,9 +270,11 @@ As discussed previously in Section~\ref{subsect:app_to_cognet}, the computation 
 The down conversion process also shows a significant improvement in execution time on the GPU.  This operation is performed as an element-wise multiplication of two matrices, an operation which again is highly parallelizable.  The computation of the product sequences and the final SCD function are the two most computationally intensive portions of the algorithm, simply due to the large volume of data that needs to be processed.  At all signal size values we see a significant advantage go to the GPU for these computations.  Again as mentioned in Section~\ref{subsect:app_to_cognet}, this is the kind of large scale, complex computation that the GPU excels at performing.
 
 \section{Conclusion}
-a brief conclusion about our work on this topic.
+\label{sect:gpu_conclusion}
+The computational complexity of various spectrum sensing algorithms can hinder their performance when computed on standard CPU architectures.  Even the use of multi-core processors with multi-threaded execution can not improve the performance of these algorithms as much as execution on a GPU.  We have ported two standard energy detection algorithms and the FFT Accumulation Method for cyclostationary spectral analysis on the GPU.  We have compared their computational performance  when executed on a standard CPU architecture and when executed on a programmable GPU architecture.  Overall we have shown that by porting these algorithms to run on a programmable GPU, the performance of these algorithms greatly improves.  This is due to the massively parallel computing architecture available on the GPU and the ease of access to this architecture through NVidia CUDA.
 
 
 \section{Future Work}
+\label{sect:gpu_future_work}
 In this chapter we have presented our initial findings in the comparison of spectrum sensing algorithms on the CPU vs the GPU.  One of the main goals of our future work will be learning more advanced optimization techniques for programming on the GPU.  We are still fairly new to the use of this architecture and feel that our results can still improve more through further optimization of our GPU based code.
-Further exploration of other, more advanced, spectrum sensing, such as cooperative energy detection, techniques would prove to be an interesting study.  We also want to expand the use of our algorithms to a real cognitive radio testbed to see how well the GPU can handle live input and output in a real cognitive radio environment.
+Further exploration of other, more advanced, spectrum sensing algorithms, such as cooperative energy detection, techniques would prove to be an interesting study.  We would also like to expand the use of our algorithms to a real cognitive radio testbed to see how well the GPU can handle live input and output in a real cognitive radio environment.
