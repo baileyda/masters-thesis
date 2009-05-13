@@ -42,21 +42,24 @@ Ultimately this difference in architecture translates to higher throughput of fl
 Through NVIDIA's CUDA computing engine, the massively parallel structure of GPU's can be harnessed for general purpose computing.  CUDA provides extensions to industry standard languages, such as C and Python, to access the parallel computing capabilities of NVIDIA based GPU's.  CUDA provides a set of three key abstractions - a hierarchy of thread groups, shared memory, and barrier synchronization - that are exposed to the programmer through these language extensions \cite{Nvidia08}.
 
 \subsection{Application to Cognitive Networking}
+\label{subsect:app_to_cognet}
 Cognitive networking algorithms rely on extremely fast computations of large sets of complex data in order to provide the necessary real time requirements for performance.  In many cases, these computations can take advantage of parallel computing architectures, such as those offered by GPUs, to help increase their performance.
 
-One of the primary operations relied upon by many of the cognitive networking algorithms is the computation of Fast Fourier Transformations (FFT)  This is a common operation in many signal processing algorithms and is one that can benefit from a high degrees of parallelism.  Algorithms such as the FFT Accumulation Method (\ref{sect:FAM}) make heavy use of FFT's, so a fast implementation can make a big difference in the algorithms overall performance.  Figure \ref{fig:matlab_vs_gpu_fft_timings} shows a comparison of computation times for FFT's of varying size using Matlab and using CUDA for GPU execution.  The CUDA computations times include the necessary time to transfer the signal data from host memory (RAM) into device memory (GPU RAM).  Please see section \ref{sect:test_platform} for details on the testing platform used to generate these results.
+One of the primary operations relied upon by many of the cognitive networking algorithms is the computation of Fast Fourier Transformations (FFT)  This is a common operation in many signal processing algorithms and is one that can benefit from a high degrees of parallelism.  Algorithms such as the FFT Accumulation Method (\ref{sect:FAM}) make heavy use of FFTs, so a fast implementation can make a big difference in the algorithms overall performance.  Figure \ref{fig:matlab_vs_gpu_fft_timings} shows a comparison of computation times for FFTs of complex signals of varying size using Matlab and using CUDA for GPU execution.  The CUDA computations times include the necessary time to transfer the signal data from host memory (RAM) into device memory (GPU RAM).  Please see section \ref{sect:test_platform} for details on the testing platform used to generate these results.
 
 \begin{figure}[ht]
 \begin{center}
  \includegraphics[angle=270,scale=0.6]{images/gpu_images/matlab_vs_cuda_fft_timings.eps}
 \end{center}
-\caption{Graph showing a comparison of computations times for FFT's of varying sizes in Matlab and on a GPU.}
+\caption{Graph showing a comparison of computations times for FFTs of varying sizes in Matlab and on a GPU.}
 \label{fig:matlab_vs_gpu_fft_timings}
 \end{figure}
 
 In analyzing this graph we can see as the size of the FFT increases, Matlab hits a point where computations times grow exponentially while computations on the GPU continue to grow in a slow linear fashion.  This crossover point occurs at sizes of $N = 2^13 = 8192$ and greater.  Signal data containing this many discrete points is not out of the question, especially when performing wide-band spectrum sensing.  
 
-At the same time this graph exposes a weakness of computing on the GPU.  At sizes below the switching threshold, the GPU's performance has a floor which is does not go below.  This is because of the overhead associated with a) transferring the data from host memory to device memory, b) setting up the necessary framework for parallel computation.  Regardless of the amount of data being processed these factors are always present. Therefore to negate the computation overhead gained from these factors the GPU should be saturated with as much data as possible in order to see the most benefit from its massively parallel architecture.  At sizes below $N = 8192$ the GPU was simply not receiving enough data to negate the computation overhead.
+At the same time this graph exposes a weakness of computing on the GPU.  At sizes below the switching threshold, the GPU's performance has a floor which is does not go below.  This is because of the overhead associated with a) transferring the data from host memory to device memory, b) setting up the necessary framework for parallel computation.  Regardless of the amount of data being processed these factors are always present. Therefore to negate the computational overhead gained from these factors the GPU should be saturated with as much data as possible and perform computations of a complex enough nature in order to see the most benefit from its massively parallel architecture.  At sizes below $N = 8192$ the GPU was simply not receiving enough data to negate the computational overhead of performing a single FFT.
+
+This is a fairly simplified example since we are only computing a single FFT.  Typical algorithms will require much more complex computation than just a single FFT so the mentioned overhead associated with GPU computations will usually be easily negated.  As such these signal size thresholds do not hold as concrete threshold values to be targeted when considering the GPU for computing an algorithm.
 
 Despite this weakness if using the GPU for computations, as mentioned previously, the need to process large amounts of signal data is not uncommon.  Therefore when performing more wide-band operations, the GPU will likely still have a strong upper hand over traditional CPU computations.
 
@@ -95,13 +98,13 @@ Energy detectors by nature have to be suboptimal.  This is due to the fact that 
 
 \subsection{Cyclostationary Spectral Analysis}
 \label{sect:cyclo}
-Another method of performing spectrum sensing is through the use of cyclostationary spectral analysis.  This method is typically chosen to detect low SNR modulated signals because of its ability to distinguish between modulated signals, interference, and noise in low signal to noise ratios \cite{FenChenWan08}.  Cyclic spectral analysis algorithms work by estimating the correlation between spectral components of signals.  Spectral components are the complex envelopes of narrowband, bandpass components of a signal \cite{RobBroLoo91}.  This correlation is described by the spectral correlation density (SCD) function.  This function describes the localization in the frequency domain of the amount of time-correlation between frequency-shifted versions of a given signal $x(t)$ \cite{Costa96}.  The SCD is represented by the two dimensional cyclic frequency and signal frequency space \cite{FenChenWan08} called the bifrequency plane.  Presence of a signal can then be detected through the use of the SCD function \cite{Costa96}.
+Another method of performing spectrum sensing is through the use of cyclostationary spectral analysis.  This method is typically chosen to detect low SNR modulated signals because of its ability to distinguish between modulated signals, interference, and noise in low signal to noise ratios \cite{FenChenWan08}.  Cyclic spectral analysis algorithms work by estimating the correlation between spectral components of signals.  Spectral components are the complex envelopes of narrow-band, bandpass components of a signal \cite{RobBroLoo91}.  This correlation is described by the spectral correlation density (SCD) function.  This function describes the localization in the frequency domain of the amount of time-correlation between frequency-shifted versions of a given signal $x(t)$ \cite{Costa96}.  The SCD is represented by the two dimensional cyclic frequency and signal frequency space \cite{FenChenWan08} called the bi-frequency plane.  Presence of a signal can then be detected through the use of the SCD function \cite{Costa96}.
 
 For our work we have chosen to implement the well known FFT Accumulation Method (FAM) to estimate the SCD function.  The FAM algorithms is of specific interest for adaptation onto a GPU because it is able to take great advantage of data-parallelism.  The following section gives details about the FAM algorithm
 
 \subsubsection{FFT Accumulation Method}
 \label{sect:FAM}
-The FFT Accumulation Method works by dividing the bifrequency plane into smaller regions called channel pair regions and computes the estimates one block at a time using FFT's \cite{Pace03}.  The values of the SCD function are described by equation \ref{eq:SCD}.
+The FFT Accumulation Method works by dividing the bifrequency plane into smaller regions called channel pair regions and computes the estimates one block at a time using FFTs \cite{Pace03}.  The values of the SCD function are described by equation \ref{eq:SCD}.
 
 \begin{equation}
 S^{\alpha}_{X_{N^\prime}} {(n L, f)}_{\Delta t} = \sum_{r=0}^{P-1} X_{N^\prime}(r L,f + \frac{\alpha}{2}) X_{N^\prime}^*(r L, f - \frac{\alpha}{2})
@@ -120,11 +123,11 @@ Here \begin{math}w(n)\end{math} is a data tapering window (e.g., Hamming window)
 The algorithm then occurs in three steps.  First the channelization of the input signal is performed by an $N^\prime$-point FFT being hopped over the signal data in blocks of $L$ samples.  The results from the FFT are then frequency shifted to baseband.  This produces the decimated complex demodulates \cite{RobBroLoo91}.  Second the product sequences are computed.  These are computed by multiplying each complex demodulate by the complex conjugate of each of the others \cite{Costa96}.  Once these are computed a $P$-point FFT is applied to each product sequence value.  The final step is to reorder the data from the product sequence such that it is ordered by cycle frequency vs frequency.
 
 %Maybe break this section off into a section below on the GPU's applicability to cognitive networking.
-The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences and applying the $P$-point FFT's to each of the product sequences.  This very high level of data-parallelism combined with the large amount of computation necessary makes this algorithm a strong candidate for GPU based processing.
+The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences and applying the $P$-point FFTs to each of the product sequences.  This very high level of data-parallelism combined with the large amount of computation necessary makes this algorithm a strong candidate for GPU based processing.
 
 
 \section{Experimental Setup}
-All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using CUDA supplied timing methods called from within the CUDA code.  Timings in Matlab were done using the tic and toc function calls native to Matlab.
+All of the algorithms were coded, compiled and tested on the platform detailed in Section \ref{sect:test_platform}.  Timings for GPU executions were taken using CUDA supplied timing methods called from within the CUDA code.  Timings in Matlab were done using the \textit{tic} and \textit{toc} function calls native to Matlab.
 
 \subsection{Test Platform}
 \label{sect:test_platform}
@@ -149,7 +152,7 @@ The primary testing platform used was a desktop computer with the following spec
 \item \textbf{Operating System:} Microsoft Windows XP with SP 3
 \end{itemize}
 
-All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.  Matlab did have its multi-threading options enabled which allows Matlab to automatically multi-thread some of its built in computations such as FFTs.  No explicit multi-threaded programming was done within Matlab.
 
 \subsection{Test Data}
 details about the data sets we used for testing these algorithms
@@ -157,34 +160,109 @@ details about the data sets we used for testing these algorithms
 
 
 \section{Results}
-section outlining our experimental findings
+This section outlines our experimental findings on the timing differences between standard CPU based implementations in Matlab versus the same implementation done on the GPU using NVidia CUDA.
 
 \subsection{Energy Detection}
 \label{sect:energy_detect_result}
-As discussed in Section~\ref{sect:energy_detect}, there are two possible versions of an energy detector we can implement.  We have implemented both and 
+As discussed in Section~\ref{sect:energy_detect}, there are two possible versions of an energy detector we can implement.  We have implemented both versions of the suboptimal energy detector in both Matlab and on the GPU.  The following sections provide details on their implementations in Matlab and CUDA.  A discussion on the results found will follow.
+
+\subsubsection{Implementation}
+
+
+\subsubsection{CPU vs GPU Timings}
+
+
 
 \subsection{FFT Accumulation Method}
 \label{sect:FAM_result}
-A full Matlab based implementation of the FFT Accumulation Method was provided by \cite{Costa96}.  This code was used as a basis for the development of our GPU based implementation of the FFT Accumulation Method.  The code from \cite{Costa96} was directly ported into CUDA for implementation on the GPU.  Optimizations were made to the CUDA code such that we could efficiently harness the parallelized architecture of the GPU.  We strove to maintain the same basic set of operations with the only difference between the two code bases being optimizations for running on a GPU.  This was done so that we could perform a solid comparison of the effectiveness of the GPU execution times versus on the CPU.
+The following sections provides details about the specific implementation of the FAM algorithm for both the CPU and the GPU.  Following that is a discussion of the results found in comparing the two versions execution times.
+
+\subsubsection{Implementation}
+A full Matlab based implementation of the FFT Accumulation Method was provided by \cite{Costa96}.  This code was used as a basis for the development of our GPU based implementation of the FFT Accumulation Method.  The code from \cite{Costa96} was directly ported into CUDA for implementation on the GPU.  Optimizations were made to the CUDA code such that we could efficiently harness the parallelized architecture of the GPU.  We strove to maintain the same basic set of operations with the only difference between the two code bases being optimizations for running on a GPU.  This was done so that we could perform a solid comparison of the effectiveness of the GPU execution times versus times on the CPU.
+
+\subsubsection{CPU vs GPU Timings}
+In Table~\ref{tbl:fam_matlab_timings} and \ref{tbl:fam_cuda_timings} we can see the results of our timing comparisons between the two versions of the FAM algorithm.  These tables give a detailed breakdown of the average time for each portion of the algorithm to compute as well as the average total time to compute the entire algorithm.  Timings were done for various input signal sizes, as indicated by the $N$ values at the column headers.  The CUDA results include an extra parameter in the timings, the time necessary to transfer the signal data from host memory to device memory.
 
 \begin{table*}
 \begin{center}
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|}
 \hline
-N & Matlab & CUDA \\
+ & \multicolumn{4}{|c|}{Matlab} \\
 \hline
-1024& 70.62 & 6.68 \\
-2048 & 278.45 & 13.19 \\
-4096 & 1183.94 & 39.13 \\
-8192 & 4696.60 & 150.21 \\
+N & 1024 & 2048 & 4096 & 8192 \\
+\hline
+Channelize & 0.253ms & 1.312ms & 1.366ms & 1.133ms \\
+Window & 1.042ms & 1.577ms & 4.433ms & 13.533ms \\
+Np-point FFTs & 0.493ms & 0.903ms & 1.333ms & 2.233ms \\
+Down Convert & 2.370ms & 4.777ms & 10.066ms & 17.4ms \\
+Product Seq & 9.876ms & 41.413ms & 166ms & 658.5ms \\
+P-point FFTs & 13.848ms & 54.107ms & 222.3ms & 882.566ms \\
+SCD & 41.45ms & 177.039ms & 780.566ms & 3144.133ms \\
+\hline
+Total & 69.432ms & 280.899ms & 1186.133ms & 4719.567ms \\
 \hline
 \end{tabular}
-\caption{Shows the timings taken during the execution of the FFT Accumulation Method in Matlab and executing on the GPU.}
-\label{tbl:fam_timings}
+\caption{Break down of the timings of the Matlab based FAM code.  N indicates the size of the signal being processed.  All times given are in milliseconds.}
+\label{tbl:fam_matlab_timings}
 \end{center}
 \end{table*}
+
+
+\begin{table*}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+ & \multicolumn{4}{|c|}{CUDA} \\
+\hline
+N & 1024 & 2048 & 4096 & 8192 \\
+\hline
+Memory Transfer & 0.564ms & 0.544ms & 0.537ms & 0.58ms \\
+Channelize & 1.127ms & 0.569ms & 0.765ms & 0.732ms \\
+Window & 0.51ms & 0.404ms & 1.238ms & 3.343ms \\
+Np-point FFTs & 0.49ms & 0.284ms & 0.591ms & 0.672ms \\
+Down Convert & 0.671ms & 0.382ms & 0.777ms & 0.841ms \\
+Product Seq & 1.475ms & 4.067ms & 14.992ms & 56.338ms \\
+P-point FFTs & 1.327ms & 3.537ms & 13.886ms & 52.331ms \\
+SCD & 0.826ms & 1.386ms & 6.19ms & 34.603ms \\
+\hline
+Total & 6.993ms & 11.179ms & 38.98ms & 149.445ms \\
+\hline
+\end{tabular}
+\caption{Break down of the timings of the CUDA based FAM code.  N indicates the size of the signal being processed.  All times given are in milliseconds.}
+\label{tbl:fam_cuda_timings}
+\end{center}
+\end{table*}
+
+In comparing the total times of execution we can clearly see that the GPU based implementation provide significant speed up.  We can also observe that as the size of the input signal increases we see a substantially more significant increase in performance gained by the GPU over the CPU implementation.  Table~\ref{tbl:fam_gpu_speedup} shows how many times faster the GPU is than the CPU for the execution of the FAM algorithm at varying signal sizes.
+
+\begin{table*}
+\begin{center}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\multicolumn{5}{|c|}{Speedup of GPU vs CPU} \\
+\hline
+N & 1024 & 2048 & 4096 & 8192 \\
+\hline
+Times Speedup & 9.928 & 25.127 & 30.429 & 31.58 \\
+\hline
+\end{tabular}
+\caption{Shows how many times faster the GPU executed the FAM algorithm than the CPU.}
+\label{tbl:fam_gpu_speedup}
+\end{center}
+\end{table*}
+
+We can also observe how different portions of the FAM algorithm benefit from the parallel architecture of the GPU.  We can see that the channelization of the signal data is comparable between the two architectures.  This is not surprising since the channelization process is just copying chunks of memory from one structure to another.  The only case where the GPU might gain a significant advantage is when the memory architecture of the CPU is significantly slower than that of the GPU.
+
+The application of the data tapering window shows significant differences between the two architectures.  This is not surprising since the application of the window is computed as a matrix multiplication operation between the channelized data matrix and a matrix with window coefficients along the diagonal.  The matrix multiplication algorithm is capable of taking advantage of parallel architecture, so naturally it benefits greatly from the high levels of parallelism on the GPU.
+
+As discussed previously in Section~\ref{subsect:app_to_cognet}, the computation of FFTs benefits greatly from execution on the GPU.  One benefit not discussed though is the ability of the GPU to batch process several FFTs of the same size in parallel.  In the case of these FFT computations it is this ability that gives the GPU the edge is processing.  In the case of each signal size the values of $Np$ and $P$ are relatively small so the computation times of a single FFT would actually favor the CPU.  In this algorithm it is not the size of the FFT that matters, but the number of FFTs that must be applied.  The computation of the $P$ different $Np$-point FFTs is fairly similar between the two versions.  This is because the value of $P$ is typically less than $100$ so a powerful enough CPU can typically keep up with the GPU in this case.  We really see the GPU's advantage illustrated when observing the time differences for the application of the $Np^2$ different $P$-point FFTs.  The $Np^2$ term is easily in the thousands so the batch processing ability of the GPU is able to shine.
+
+The down conversion process also shows a significant improvement in execution time on the GPU.  This operation is performed as an element-wise multiplication of two matrices, an operation which again is highly parallelizable.  The computation of the product sequences and the final SCD function are the two most computationally intensive portions of the algorithm, simply due to the large volume of data that needs to be processed.  At all signal size values we see a significant advantage go to the GPU for these computations.  Again as mentioned in Section~\ref{subsect:app_to_cognet}, this is the kind of large scale, complex computation that the GPU excels at performing.
 
 \section{Conclusion}
 a brief conclusion about our work on this topic.
 
+
 \section{Future Work}
+In this chapter we have presented our initial findings in the comparison of spectrum sensing algorithms on the CPU vs the GPU.  One of the main goals of our future work will be learning more advanced optimization techniques for programming on the GPU.  We are still fairly new to the use of this architecture and feel that our results can still improve more through further optimization of our GPU based code.
+Further exploration of other, more advanced, spectrum sensing, such as cooperative energy detection, techniques would prove to be an interesting study.  We also want to expand the use of our algorithms to a real cognitive radio testbed to see how well the GPU can handle live input and output in a real cognitive radio environment.
