@@ -1,9 +1,9 @@
 \chapter{GPU Based Algorithms for Spectrum Sensing in Cognitive Radio Networks}
 \label{chap:cognet_gpu}
 \section{Introduction}
-The idea of opportunistic spectrum sharing has seen heavy focus in the cognitive radio research community.  The use of efficient spectrum sensing algorithms is necessary to facilitate this.  As such, much of the research has focused on the development of these efficient spectrum sensing algorithms.  Various methods have been proposed such as energy detection \cite{CabTkaBro06}\cite{HurParWoo06}, cyclostationary spectral analysis \cite{FenBos07}\cite{OshClaEbe07}, and collaborative based approachs \cite{GanLi05}\cite{SadAzm08}.  Overall the computational performance of these algorithms requires improvement in order to be truly viable in order to perform real time spectrum sensing.
+The idea of opportunistic spectrum sharing has seen heavy focus in the cognitive radio research community.  The use of efficient spectrum sensing algorithms is necessary to facilitate this.  As such, much of the research has focused on the development of these efficient spectrum sensing algorithms.  Various methods have been proposed such as energy detection \cite{CabTkaBro06}\cite{HurParWoo06}, cyclostationary spectral analysis \cite{FenBos07}\cite{OshClaEbe07}, and collaborative based approaches \cite{GanLi05}\cite{SadAzm08}.  Overall the computational performance of these algorithms requires improvement in order to be truly viable in order to perform real time spectrum sensing.
 
-The goal of our work here is to implement well defined methods of spectrum sensing on a new computing architecture, a programming Graphics Processing Unit (GPU).  We show that this computing architecture greatly improves the performance of these spectrum sensing algorithms both in terms of run times as well as amount of complex computational work they can achieve in a reasonable time.  In Section~\ref{sect:gpu_related_work} we discuss some of the related work around improving the performance of spectrum sensing algorithsm.  
+The goal of our work here is to implement well defined methods of spectrum sensing on a new computing architecture, a programming Graphics Processing Unit (GPU).  We show that this computing architecture greatly improves the performance of these spectrum sensing algorithms both in terms of run times as well as amount of complex computational work they can achieve in a reasonable time.  In Section~\ref{sect:gpu_related_work} we discuss some of the related work around improving the performance of spectrum sensing algorithms.  
 
 This chapter is organized as follows: Section~\ref{sect:gpu_why_use_gpu} discusses why the GPU is a viable computing architecture for improving the performance of spectrum sensing algorithms.  Section~\ref{sect:gpu_spect_sensing_algos} then presents the algorithms we consider for implementation on the GPU.  In Sections \ref{sect:gpu_experiment} and \ref{sect:gpu_results} we present the testing environment, test data used, and the results we gathered from the comparison of running these algorithms on the CPU vs the GPU.  Sections \ref{sect:gpu_conclusion} and \ref{sect:gpu_future_work} then closes with our conclusions on our findings and a short discussion of our future work.
 
@@ -114,7 +114,7 @@ For our work we have chosen to implement the well known FFT Accumulation Method 
 
 \subsubsection{FFT Accumulation Method}
 \label{sect:FAM}
-The FFT Accumulation Method works by dividing the bifrequency plane into smaller regions called channel pair regions and computes the estimates one block at a time using FFTs \cite{Pace03}.  The values of the SCD function are described by equation \ref{eq:SCD}.
+The FFT Accumulation Method works by dividing the bi-frequency plane into smaller regions called channel pair regions and computes the estimates one block at a time using FFTs \cite{Pace03}.  The values of the SCD function are described by equation \ref{eq:SCD}.
 
 \begin{equation}
 S^{\alpha}_{X_{N^\prime}} {(n L, f)}_{\Delta t} = \sum_{r=0}^{P-1} X_{N^\prime}(r L,f + \frac{\alpha}{2}) X_{N^\prime}^*(r L, f - \frac{\alpha}{2})
