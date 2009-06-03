@@ -1,25 +1,25 @@
 \chapter{GPU Based Algorithms for Spectrum Sensing in Cognitive Radio Networks}
 \label{chap:cognet_gpu}
 \section{Introduction}
-The idea of opportunistic spectrum sharing has seen heavy focus in the cognitive radio research community.  The use of efficient spectrum sensing algorithms is necessary to facilitate this.  As such, much of the research has focused on the development of these efficient spectrum sensing algorithms.  Various methods have been proposed such as energy detection \cite{CabTkaBro06}\cite{HurParWoo06}, cyclostationary spectral analysis \cite{FenBos07}\cite{OshClaEbe07}, and collaborative based approaches \cite{GanLi05}\cite{SadAzm08}.  Overall the computational performance of these algorithms requires improvement in order to be truly viable in order to perform real time spectrum sensing.
+In a cognitive network it is assumed that a wireless spectrum is licensed to a set of primary users.  These primary users have unrestricted access to this licensed spectrum.  At the same time, secondary users also have access to this wireless spectrum but with the restriction that they may only use the spectrum when the primary users are not.  To detect the presence of unused portions of a spectrum, these secondary users use spectrum sensing algorithms.  These allow users to detect unused portions of a wireless spectrum and opportunistically occupy them until a primary user returns to use that spectrum.  The idea of opportunistic spectrum sharing has seen heavy focus in the cognitive radio research community.  The use of efficient spectrum sensing algorithms is necessary to facilitate this.  As such, much of the research has focused on the development of these efficient spectrum sensing algorithms.  Various methods have been proposed such as energy detection \cite{CabTkaBro06}\cite{HurParWoo06}, cyclostationary spectral analysis \cite{FenBos07}\cite{OshClaEbe07}, and collaborative based approaches \cite{GanLi05}\cite{SadAzm08}.  Overall the computational performance of these algorithms requires improvement in order to be truly viable in order to perform real time spectrum sensing.
 
-The goal of our work here is to implement well defined methods of spectrum sensing on a new computing architecture, a programming Graphics Processing Unit (GPU).  We show that this computing architecture greatly improves the performance of these spectrum sensing algorithms both in terms of run times as well as amount of complex computational work they can achieve in a reasonable time.  In Section~\ref{sect:gpu_related_work} we discuss some of the related work around improving the performance of spectrum sensing algorithms.  
+The goal of our work here is to implement well defined methods of spectrum sensing on a new computing architecture, a programming Graphics Processing Unit (GPU).  We show that this computing architecture greatly improves the performance of these spectrum sensing algorithms both in terms of run times as well as the amount of complex computational work they can complete in a reasonable time.  In Section~\ref{sect:gpu_related_work} we discuss some of the related work around improving the performance of spectrum sensing algorithms.  
 
-This chapter is organized as follows: Section~\ref{sect:gpu_why_use_gpu} discusses why the GPU is a viable computing architecture for improving the performance of spectrum sensing algorithms.  Section~\ref{sect:gpu_spect_sensing_algos} then presents the algorithms we consider for implementation on the GPU.  In Sections \ref{sect:gpu_experiment} and \ref{sect:gpu_results} we present the testing environment, test data used, and the results we gathered from the comparison of running these algorithms on the CPU vs the GPU.  Sections \ref{sect:gpu_conclusion} and \ref{sect:gpu_future_work} then closes with our conclusions on our findings and a short discussion of our future work.
+This chapter is organized as follows: Section~\ref{sect:gpu_why_use_gpu} discusses why the GPU is a viable computing architecture for improving the performance of spectrum sensing algorithms.  Section~\ref{sect:gpu_spect_sensing_algos} then presents the algorithms we consider for implementation on the GPU.  In Sections \ref{sect:gpu_experiment} and \ref{sect:gpu_results} we present the testing environment, test data used, and the results gathered from the comparison of running these algorithms on the CPU vs the GPU.  Sections \ref{sect:gpu_conclusion} and \ref{sect:gpu_future_work} then closes with our conclusions on our findings and a short discussion of our future work.
 
 \section{Related Work}
 \label{sect:gpu_related_work}
-The literature surrounding the topic of spectrum sensing in cognitive networks is very broad.  Several different works have focused on means of improving the performance of existing spectrum sensing algorithms.  The work done in \cite{HurParWoo06} and \cite{QuaCuiSay08} focus on algorithms for wide-band spectrum sensing.  These algorithms focus on detecting spectral holes in multiple sub-channels in a single pass of an algorithm rather than searching for spectral holes one sub-channel at a time.
+The literature surrounding the topic of spectrum sensing in cognitive networks is very broad.  Several different works have focused on means for improving the performance of existing spectrum sensing algorithms.  The work done in \cite{HurParWoo06} and \cite{QuaCuiSay08} focus on algorithms for wide-band spectrum sensing.  These algorithms focus on detecting spectral holes in multiple sub-channels in a single pass of an algorithm rather than searching for spectral holes one sub-channel at a time.
 
 Further work has focused on the development of co-operative spectrum sensing techniques, such as the work done in \cite{GanLi05} and \cite{SadAzm08}.  Co-operative based spectrum sensing aims to improve the performance and reliability of spectrum detection by having multiple nodes in the network work together in detecting spectral holes.  These methods have been shown to improve performance but have not considered the possibility of using a different computing architecture to further improve performance.
 
-The work done in \cite{OshClaEbe07} and \cite{FenBos07} have aimed to improve the overall performance of their spectrum sensing algorithms by porting them onto the IBM Cell processor in a Playstation 3.  The architecture of the Cell processor is one meant for highly efficient parallel computation, which provided great benefit to the spectrum sensing algorithms used in the aforementioned works.  In \cite{FenBos07} they say that the performance increase they got was limited by two factors.  First the latency of transferring the data from its source to the Cell processor was significant which hurts potential real time performance.  The second limiting factor was the data rate limits of USB2, which was used in transferring the signal data from its source to the Cell processor in the Playstation 3, limited the signal bandwidth they could work with.
+The work done in \cite{OshClaEbe07} and \cite{FenBos07} aimed to improve the overall performance of their spectrum sensing algorithms by porting them onto the IBM Cell processor in a Playstation 3.  The architecture of the Cell processor is one meant for highly efficient parallel computation, which provided great benefit to the spectrum sensing algorithms used in the aforementioned works.  In \cite{FenBos07} they say that the performance increase they got was limited by two factors.  First the latency of transferring the data from its source to the Cell processor was significant, which hurts potential real time performance.  The second limiting factor was the data rate limits of USB2, which was used in transferring the signal data from its source to the Cell processor in the Playstation 3, limiting the signal bandwidth they could work with.
 
 Overall the literature has shown many ways in which to increase the performance of spectrum sensing algorithms.  Yet no one has yet made an attempt to port these algorithms onto a General Purpose Graphics Processing Unit (GPGPU).  The novelty of our work here is showing how several of these algorithms can be ported to the GPU, and to show the performance gains achieved by doing so.
 
 \section{Why Use the GPU?}
 \label{sect:gpu_why_use_gpu}
-The GPU is a highly parallelized, multi-threaded, multi-cored processor.  The GPU is well suited to address problems that can be expressed as data-parallel computations - the same program executing on many data elements in parallel - with high arithmetic intensity \cite{Nvidia08}.  A single GPU is capable of computing thousands of threads simultaneously with incredibly optimized performance for high precision floating point operations.  Figure \ref{fig:cpu_vs_gpu_arch} illustrates the difference in architecture between CPUs and GPUs.  Since GPUs are specialized for data parallelism, they have a lower requirement for flow control and memory access latency can be hidden with high intensity calculations instead of data caches \cite{Nvidia08}.  
+The GPU is a highly parallelized, multi-threaded, multi-cored processor.  The GPU is well suited to address problems that can be expressed as data-parallel computations - the same program executing on many data elements in parallel - with high arithmetic intensity \cite{Nvidia08}.  A single GPU is capable of computing thousands of threads simultaneously with exceptionally optimized performance for high precision floating point operations.  Figure \ref{fig:cpu_vs_gpu_arch} illustrates the difference in architecture between CPUs and GPUs.  Since GPUs are specialized for data parallelism, they have a lower requirement for flow control and memory access latency can be hidden with high intensity calculations instead of data caches \cite{Nvidia08}.  
 
 %should use some of the diagrams from the Nvidia CUDA Programming Guide
 \begin{figure}[ht]
@@ -61,18 +61,18 @@ One of the primary operations relied upon by many of the cognitive networking al
 \label{fig:matlab_vs_gpu_fft_timings}
 \end{figure}
 
-In analyzing this graph we can see as the size of the FFT increases, Matlab hits a point where computations times grow exponentially while computations on the GPU continue to grow in a slow linear fashion.  This crossover point occurs at sizes of $N = 2^13 = 8192$ and greater.  Signal data containing this many discrete points is not out of the question, especially when performing wide-band spectrum sensing.  
+In analyzing this graph we can see as the size of the FFT increases, Matlab hits a point where computations times grow exponentially while computations on the GPU continue to grow in a slow linear fashion.  This crossover point occurs at sizes of $N = 2^{13} = 8192$ and greater.  Signal data containing this many discrete points is not out of the question, especially when performing wide-band spectrum sensing.  
 
-At the same time this graph exposes a weakness of computing on the GPU.  At sizes below the switching threshold, the GPU's performance has a floor which is does not go below.  This is because of the overhead associated with a) transferring the data from host memory to device memory, b) setting up the necessary framework for parallel computation.  Regardless of the amount of data being processed these factors are always present. Therefore to negate the computational overhead gained from these factors the GPU should be saturated with as much data as possible and perform computations of a complex enough nature in order to see the most benefit from its massively parallel architecture.  At sizes below $N = 8192$ the GPU was simply not receiving enough data to negate the computational overhead of performing a single FFT.
+At the same time this graph exposes a weakness of computing on the GPU.  At sizes below the switching threshold, the GPU's performance has a floor which is does not go below.  This is because of the overhead associated with a) transferring the data from host memory to device memory, b) setting up the necessary framework for parallel computation.  Regardless of the amount of data being processed these factors are always present. Therefore to overcome the computational overhead associated with these factors the GPU should be saturated with as much data as possible and perform computations of a complex enough nature in order to see the most benefit from its massively parallel architecture.  At sizes below $N = 8192$ the GPU was simply not receiving enough data to negate the computational overhead of performing a single FFT.
 
-This is a fairly simplified example since we are only computing a single FFT.  Typical algorithms will require much more complex computation than just a single FFT so the mentioned overhead associated with GPU computations will usually be easily negated.  As such these signal size thresholds do not hold as concrete threshold values to be targeted when considering the GPU for computing an algorithm.
+This is a fairly simplified example since we are only computing a single FFT.  Typical algorithms will require much more complex computation than just a single FFT so the mentioned overhead associated with GPU computations will usually be an insignificant part of the overall computation.  As such these signal size thresholds are not concrete threshold values to be targeted when considering the GPU for computing an algorithm.
 
-Despite this weakness if using the GPU for computations, as mentioned previously, the need to process large amounts of signal data is not uncommon.  Therefore when performing more wide-band operations, the GPU will likely still have a strong upper hand over traditional CPU computations.
+Despite this weakness when using the GPU for computations, as mentioned previously, the need to process large amounts of signal data is not uncommon.  Therefore when performing more wide-band operations, the GPU will likely still have a strong advantage over traditional CPU computations.
 
 \subsection{Availability and Cost Effectiveness}
-The GPU is also a very cost effective and readily available solution.  Almost every desktop, and even some laptop computers, sold today have some version of a GPU residing in them.  Even those desktop computers without a GPU can easily add them one to its setup, and at a fairly reasonable price too.  
+The GPU is also a very cost effective and readily available solution.  Almost every desktop, and even some laptop computers, sold today have some version of a GPU residing in them.  Even those desktop computers without a GPU can easily add one to its setup, and at a fairly reasonable price too.  
 
-Although cell processors are also very powerful and highly parallelizable, they are not yet as widely available as GPU's in everyday computing devices.  The only commercially available device with a cell processor is the Sony Playstation 3.  It is possible to use the cell processor in the Playstation 3 for general purpose computing, as evidenced by the work done in \cite{FenBos07}, but it requires the purchase and presence of the entire Playstation 3 hardware setup.  It may not be feasible or desirable to have an extra hardware piece such as the Playstation 3 tied to a real world cognitive radio.  As described by \cite{FenBos07} there is also significant latency associated with transferring the necessary data from its source to the Playstation 3 for processing.  This is due in part to the lack of a capable high speed bus through which to transfer data into the Playstation 3.  GPU's do not suffer from problem as they have a dedicated high speed bus connection through a computers motherboard.  From both a cost and availability standpoint, GPU's are an excellent choice for adapting cognitive networking algorithms.
+Although cell processors are also very powerful and highly parallelizable, they are not yet as widely available as GPU's in everyday computing devices.  The only commercially available device with a cell processor is the Sony Playstation 3.  It is possible to use the cell processor in the Playstation 3 for general purpose computing, as evidenced by the work done in \cite{FenBos07}, but it requires the purchase and presence of the entire Playstation 3 hardware setup.  It may not be feasible or desirable to have an extra hardware piece such as the Playstation 3 tied to a real world cognitive radio.  As described by \cite{FenBos07} there is also significant latency associated with transferring the necessary data from its source to the Playstation 3 for processing.  This is due in part to the lack of a capable high speed bus through which to transfer data into the Playstation 3.  GPU's do not suffer from this problem as they have a dedicated high speed bus connection through a computer's motherboard.  From both a cost and availability standpoint, GPUs are an excellent choice for accelerating cognitive networking algorithms.
 
 
 \section{Spectrum Sensing Algorithms}
@@ -83,7 +83,7 @@ There are several methods available to perform this kind of detection.  Each met
 
 \subsection{Energy Detection}
 \label{sect:energy_detect}
-One of the potential methods available to perform spectrum sensing is through the use of an energy detector.  Energy detection is typically used to detect a weak deterministic signal in additive noise, which is assumed to be additive, white, and Gaussian \cite{CabTkaBro06}.  The energy detector works by measuring the energy in the received waveform over an observation time window \cite{CabTkaBro06}.
+One of the potential methods available to perform spectrum sensing is through the use of an energy detector.  Energy detection is typically used to detect a weak deterministic signal in noise, which is assumed to be additive, white, and Gaussian \cite{CabTkaBro06}.  The energy detector works by measuring the energy in the received waveform over an observation time window \cite{CabTkaBro06}.
 
 Energy detectors by nature have to be suboptimal.  This is due to the fact that in order to be optimal the detector would need to be based on a matched filter, thus requiring \textit{a priori} knowledge of the data for coherent processing \cite{CabTkaBro06}.  Knowing this, there are two possible ways of computing our suboptimal energy detector.  The first method uses a conventional energy detector which consists of the following parts: a low pass filter, a Nyquist sampling A/D converter, and a square-law device and integrator \cite{CabTkaBro06}.  Figure \subref{fig:energy_detect_a} provides a block diagram of this method.  The second method is devised through the use of a periodogram to estimate the spectrum via the squared magnitude of the FFT of the signal \cite{CabTkaBro06}.  Figure \subref{fig:energy_detect_b} illustrates a block diagram for this method.
 
@@ -104,7 +104,7 @@ Energy detectors by nature have to be suboptimal.  This is due to the fact that 
 \end{figure}
 
 For our work we have chosen to work with the periodogram based energy detector described by \cite{CabTkaBro06}.  Specifically, we have chosen the Welch method of averaged periodograms for estimating the Power Spectral Density (PSD) function as detailed in \cite{Welch67}.  This method breaks the signal data down into equal sized segments.  Each segment is defined to be of length $M$ and we can define segments to have an overlap of $D$ samples.  Each segment is then windowed, typically with a Hamming window.  Following this, a modified periodogram of each segment is calculated.  The computation of the modified periodogram consists of 1) taking the FFT of the segment data.  2) Finding the absolute value or magnitude of each sample and squaring it.  3) Each sample is then scaled by the value $\frac{1}{M}$.  Once the modified periodogram of each segment has been computed, all the segments are averaged together to form the PSD estimate.
-The overlapping of the segments provides a decreased error variance in the final spectral estimate \cite{Welch67}.  It also has an effect on the number of segments available for averaging.  Greater overlap between segments means that more segments are able to fit within the same fixed signal size.  Changing of the parameter $M$ also effects the error variance by increasing or decreasing the number of averages we take to generate the final spectral estimate \cite{Welch67}.  As stated by \cite{CabTkaBro06}, the adjustment of the segment size $M$ also has an effect on the detectors performance.
+The overlapping of the segments provides a decreased error variance in the final spectral estimate \cite{Welch67}.  It also has an effect on the number of segments available for averaging.  Greater overlap between segments means that more segments are able to fit within the same fixed signal size.  Changing of the parameter $M$ also affects the error variance by increasing or decreasing the number of averages we take to generate the final spectral estimate \cite{Welch67}.  As stated by \cite{CabTkaBro06}, the adjustment of the segment size $M$ also has an affect on the detectors performance.
 
 \subsection{Cyclostationary Spectral Analysis}
 \label{sect:cyclo}
@@ -130,7 +130,7 @@ X_{N^\prime}(n,f) = \sum_{n=0}^{N^\prime - 1} w(n) x(n) e^{-(i 2 \pi f n)/N^\pri
 
 Here \begin{math}w(n)\end{math} is a data tapering window (e.g., Hamming window), L is a decimation factor in the frequency domain \cite{FenChenWan08}, P is equal to \begin{math}N / L \end{math} where $N$ is the total number of samples in the signal and $N^\prime$ is equal to the number of samples in each complex demodulate.  In choosing the value of \begin{math}N^\prime \end{math} we must consider that the time-frequency resolution product \begin{math}N/N^\prime\end{math} must satisfy the condition \begin{math}N/N^\prime >> 1\end{math} in order to have a statistically reliable measurement \cite{RobBroLoo91}.  The value of $L$ is typically chosen to be \begin{math}L \le N^\prime / 4\end{math} in order to provide a good compromise between computational efficiency and minimizing cycle leakage and aliasing \cite{RobBroLoo91}.
 
-The algorithm then occurs in three steps.  First the channelization of the input signal is performed by an $N^\prime$-point FFT being hopped over the signal data in blocks of $L$ samples.  The results from the FFT are then frequency shifted to baseband.  This produces the decimated complex demodulates \cite{RobBroLoo91}.  Second the product sequences are computed.  These are computed by multiplying each complex demodulate by the complex conjugate of each of the others \cite{Costa96}.  Once these are computed a $P$-point FFT is applied to each product sequence value.  The final step is to reorder the data from the product sequence such that it is ordered by cycle frequency vs frequency.
+The algorithm then occurs in three steps.  First the channelization of the input signal is performed by an $N^\prime$-point FFT being hopped over the signal data in blocks of $L$ samples.  The results from the FFT are then frequency shifted to baseband.  This produces the decimated complex demodulates \cite{RobBroLoo91}.  Second the product sequences are computed.  These are computed by multiplying each complex demodulate by the complex conjugate of each of the others \cite{Costa96}.  Once these are computed a $P$-point FFT is applied to each product sequence value.  The final step reorders the data from the product sequence such that it is ordered by cycle frequency vs frequency.
 
 %Maybe break this section off into a section below on the GPU's applicability to cognitive networking.
 The parallelism of this algorithm is a direct result of the independence of the product sequences both before and after their computation \cite{RobBroLoo91}.  This means that at each step of the algorithm, we can take advantage of high degrees of data-parallelism.  In step one, each complex demodulate can be independently computed.  The same can be said of computing the product sequences and applying the $P$-point FFTs to each of the product sequences.  This very high level of data-parallelism combined with the large amount of computation necessary makes this algorithm a strong candidate for GPU based processing.
@@ -163,7 +163,7 @@ The primary testing platform used was a desktop computer with the following spec
 \item \textbf{Operating System:} Microsoft Windows XP with SP 3
 \end{itemize}
 
-All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.  Matlab did have its multi-threading options enabled.  This allows Matlab to automatically multi-thread some of its built in computations such as simultaneous computation of multiple FFTs and matrix multiplication.  No explicit multi-threaded programming was done within the Matlab code due to the lack of the Matlab Parallel Computing Toolbox.
+All GPU development was done using NVidia CUDA SDK version 2.1.  The C++ compiler used was from Microsoft Visual Studio 2005 Professional Edition.  All Matlab code was run using Matlab R2008a version 7.6.0.324.  Matlab did have its multi-threading options enabled.  This allows Matlab to automatically multi-thread some of its "built-in" computations such as simultaneous computation of multiple FFTs and matrix multiplication.  No explicit multi-threaded programming was done within the Matlab code due to the lack of the Matlab Parallel Computing Toolbox.
 %find the name of the matlab multi-threading toolbox.
 
 \subsection{Test Data}
@@ -182,9 +182,9 @@ This section outlines our experimental findings on the timing differences betwee
 As discussed in Section~\ref{sect:energy_detect}, we have chosen the Welch method based energy detector.  We have implemented this in both Matlab and on the GPU.  The following sections provide details on the implementation in Matlab and CUDA.  A discussion on the results found follows.
 
 \subsubsection{Implementation}
-The implementation of our energy detector is rather simple.  The Welch method is provided in Matlab as a built in function called \textit{pwelch}.  Our CUDA implementation of the Welch method follows the layout of the algorithm detailed in \cite{Welch67}.  The implementation has been optimized to run efficiently on the GPU.
+The implementation of our energy detector is rather simple.  The Welch method is provided in Matlab as a "built-in" function called \textit{pwelch}.  Our CUDA implementation of the Welch method follows the layout of the algorithm detailed in \cite{Welch67}.  The implementation has been optimized to run efficiently on the GPU.
 \subsubsection{CPU vs GPU Timings}
-The timing results from the Welch method based periodogram energy detector showed some very interesting, although not unexpected results.  Tables~\ref{tbl:pwelch_matlab_timings} and \ref{tbl:pwelch_cuda_timings} show these results.  As mentioned in Section~\ref{sect:energy_detect} varying the number of averages can improve the spectral estimate that is computed.  In the following tables, $M$ is the length of each segment of the signal, which is the number of points averaged to produce the result.  We also include timings of different percentages of overlay between segments to observe their effect on performance.
+The timing results from the Welch method based periodogram energy detector showed some very interesting, although not unexpected results.  Tables~\ref{tbl:pwelch_matlab_timings} and \ref{tbl:pwelch_cuda_timings} show these results.  As mentioned in Section~\ref{sect:energy_detect} varying the number of averages can improve the spectral estimate that is computed.  In the following tables, $M$ is the length of each segment of the signal, which is the number of points averaged to produce the result.  We also include timings of different percentages of overlay between segments to observe their affect on performance.
 
 In looking at the Matlab timings we can see that as the segment size grows, the time for computation is reduced.  This is not surprising since larger segments means fewer segments to compute, thus reducing the volume of computations necessary.  We also observe that as the overlay increases the computation times rise for all segment sizes.  Again this is expected since more overlay allows for more segments to be produced, thus increasing the volume of calculations necessary to form the final estimate.  In each case we can see that increasing the overlay percentage from 25\% to 75\% at least doubles the computation time required.
  
@@ -201,6 +201,7 @@ M & 512 & 1024 & 2048 & 4096 \\
 75\% Overlap & 42.717ms & 25.284ms & 26.428ms & 17.409ms \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Timing results from Matlab execution of Welch's Method of averaged periodograms for estimation of PSD.  Timings showed for varying segment and overlap sizes.}
 \label{tbl:pwelch_matlab_timings}
 \end{center}
@@ -221,6 +222,7 @@ M & 512 & 1024 & 2048 & 4096 \\
 75\% Overlap & 1.457ms & 1.462ms & 1.555ms & 1.720ms \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Timing results from CUDA execution of Welch's Method of averaged periodograms for estimation of PSD.  Timings showed for varying segment and overlap sizes.}
 \label{tbl:pwelch_cuda_timings}
 \end{center}
@@ -241,6 +243,7 @@ M & 512 & 1024 & 2048 & 4096 \\
 75\% Overlap & 29.31x & 17.29x & 16.99x & 10.12x \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Times speedup of CUDA over Matlab for each segment size and overlay percentage.}
 \label{tbl:pwelch_cuda_speedup}
 \end{center}
@@ -249,7 +252,7 @@ M & 512 & 1024 & 2048 & 4096 \\
 
 \subsection{FFT Accumulation Method}
 \label{sect:FAM_result}
-The following sections provides details about the specific implementation of the FAM algorithm for both the CPU and the GPU.  Following that is a discussion of the results found in comparing the two versions execution times.
+The following sections provides details about the specific implementation of the FAM algorithm for both the CPU and the GPU.  The following is a discussion of the results found in comparing the two versions execution times.
 
 \subsubsection{Implementation}
 A full Matlab based implementation of the FFT Accumulation Method was provided by \cite{Costa96}.  This code was used as a basis for the development of our GPU based implementation of the FFT Accumulation Method.  The code from \cite{Costa96} was directly ported into CUDA for implementation on the GPU.  Optimizations were made to the CUDA code such that we could efficiently harness the parallelized architecture of the GPU.  We strove to maintain the same basic set of operations with the only difference between the two code bases being optimizations for running on a GPU.  This was done so that we could perform a solid comparison of the effectiveness of the GPU execution times versus times on the CPU.
@@ -276,6 +279,7 @@ SCD & 41.45ms & 177.039ms & 780.566ms & 3144.133ms \\
 Total & 69.432ms & 280.899ms & 1186.133ms & 4719.567ms \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Break down of the timings of the Matlab based FAM code.  N indicates the size of the signal being processed.  All times given are in milliseconds.}
 \label{tbl:fam_matlab_timings}
 \end{center}
@@ -302,6 +306,7 @@ SCD & 0.826ms & 1.386ms & 6.19ms & 34.603ms \\
 Total & 6.993ms & 11.179ms & 38.98ms & 149.445ms \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Break down of the timings of the CUDA based FAM code.  N indicates the size of the signal being processed.  All times given are in milliseconds.}
 \label{tbl:fam_cuda_timings}
 \end{center}
@@ -320,6 +325,7 @@ N & 1024 & 2048 & 4096 & 8192 \\
 Times Speedup & 9.928 & 25.127 & 30.429 & 31.58 \\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 \caption{Shows how many times faster the GPU executed the FAM algorithm than the CPU.}
 \label{tbl:fam_gpu_speedup}
 \end{center}
