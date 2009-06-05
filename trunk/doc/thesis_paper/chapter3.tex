@@ -1,11 +1,11 @@
 \chapter{A Simplification Algorithm for Visualizing the Structure of Complex Graphs}
 \label{chap:graph_simp}
 \section{Introduction} 
-Graphs are used to represent and analyze a variety of data sets, from computer network topologies, to cancer cell structures, to research paper citation trends.  Graphs are a useful representation for these types of data, because they naturally provide a clear and distinct way of visualizing the data sets and the interrelationships contained within them.  These data sets are becoming larger and larger, and thus their visual representations are becoming too complex and cluttered.  Graphs frequently have hundreds or thousands of nodes.  Displaying all of these nodes and edges to a user provides no real benefit, since the density and complexity of the graph overwhelms and fills standard displays due to resolution limitations.  Graph simplification provides one way of making these graphs easily comprehensible while not removing the actual meaning or structure of the graphs.
+Graphs are used to represent and analyze a variety of data sets, from computer network topologies, to cancer cell structures, to research paper citation trends.  Graphs are a useful representation for these types of data, because they naturally provide a clear and distinct way of visualizing the data sets and the interrelationships contained within them.  These data sets are becoming larger and larger, and thus their visual representations are becoming too complex and cluttered.  Graphs frequently have hundreds or thousands of nodes.  Displaying all of these nodes and edges to a user provides no real benefit, since the density and complexity of the graph overwhelms and fills standard displays due to resolution limitations.  Graph simplification provides one way of making these graphs more comprehensible by providing a capability to the user to remove "unimportant" nodes, which then exposes key nodes in the graph and their interconnectivity.  This capability allows the user to interactively examine the structures exposed in simplification; thus enabling the exploration and evaluation of the graph.
 
-In our approach a complex, cluttered graph is progressively thinned by the user until the underlying structure of the graph becomes apparent.  The user may choose from a variety of weighting functions that quantify the importance of the nodes to be removed.  The importance metrics can be based on the topology of the graph or may be provided by an external computational process unrelated to the graph structure itself.  One important feature of the simplification process is that we maintain the connectivity of the graph during pruning.  If the graph is connected at the outset, we ensure that all simplified versions are also connected.  This feature, which the user may choose to employ or not, is included to be consistent with our goal of providing a tool for making a complex graph's underlying structure more evident.  We do not want the simplification process to change the graph's connectivity, which may misinform the user's interpretation of the graph's structure.
+In our approach a complex, cluttered graph is progressively thinned by the user until a comprehensible underlying structure in the graph is revealed.  The user may choose from a variety of weighting functions that quantify the importance of the nodes to be removed.  The importance metrics can be based on the topology of the graph or may be provided by an external computational process unrelated to the graph structure itself.  One important feature of the simplification process is that we maintain the connectivity of the graph during pruning.  By default, if the graph is connected at the outset, we ensure that all simplified versions are also connected. The user may also choose not to employ this feature.  For certain types of graphs maintaining connectivity may be important for evaluating node relationships.  In other instances, allowing the graph to split into subgraphs may highlight clusters within the graph.
 
-The simplification process involves two steps.  The first step generates weight values for all nodes in a given graph based on one of our importance metrics.  The second step takes the weighted graph and prunes out less important nodes based on these weight values.  Node removal can be done incrementally, so as to provide different graph resolutions to the user.  The user may also control the connectivity maintenance feature, deciding to preserve the initial graph connectivity during simplification or not.  The simplification algorithm is described in detail in Section \ref{sect:SimpAlg}. Results from applying several of the importance metrics to three types of graphs are presented in Section \ref{sect:Results}.
+The simplification process involves two steps.  The first step generates weight values for all nodes in a given graph based on one of our importance metrics.  The second step takes the weighted graph and prunes out less important nodes based on these weight values.  Node removal can be done incrementally, so as to provide different graph resolutions to the user, as well as to ensure that lower importance nodes are removed before higher importance nodes.  The user may also control the connectivity maintenance feature, deciding to preserve the initial graph connectivity during simplification or not.  The simplification algorithm is described in detail in Section \ref{sect:SimpAlg}. Results from applying several of the importance metrics to three types of graphs are presented in Section \ref{sect:Results}.
 
 %-------------------------------------------------------------------------
 \section{Related Work}
@@ -75,7 +75,7 @@ Importance metrics do not have to be based solely on quantities derived from the
 %\cutsubsectionbefore
 \subsection{Graph Pruning}
 
-The pruning process visits all nodes and removes those nodes, and their associated edges, with importance values below a user-specified threshold.  Removing a node can cause the graph to fragment.  In order to maintain the semantic structure of the graph we do not prune nodes whose removal would split the graph into multiple components and destroy its connectivity.  Producing a simplified graph that has been split into multiple components would convey incorrect structural information about the graph.  Gilbert and Levchenko \cite{Gilbert-Levchenko04} do not maintain the connectivity of a graph during pruning.  They reconnect the simplified graph as a post-process.
+The pruning process visits all nodes and removes those nodes, and their associated edges, with importance values below a user-specified threshold.  Removing a node can cause the graph to fragment.  In order to maintain the basic structure of the graph we do not prune nodes whose removal would split the graph into multiple components and destroy its connectivity.  Gilbert and Levchenko \cite{Gilbert-Levchenko04} do not maintain the connectivity of a graph during pruning.  They reconnect the simplified graph as a post-process.
 
 The connectivity check of the pruning process utilizes our variation on Dijkstra's single source shortest path computation mentioned previously. The candidate node is removed from the graph.  It is then determined if all of the candidate's neighboring nodes are still connected to each other through the graph.  This check is performed by attempting to calculate the shortest path between all pairs of neighboring nodes.  If unable to complete this computation, the graph has been disconnected by the candidate node's removal, and that node is then re-inserted into the graph. 
 % Therefore a single iteration of our pruning method will take $O(n^{3})$ worst case when using the connectivity check since in the worst case each node must have its connectivity checked.
@@ -114,7 +114,8 @@ In order to better visualize these graphs, they have each been pre-processed wit
 
 %-------------------------------------------------------------------------
 %\cutsectionbefore
-\section{Metrics Properties}
+\section{Metric Performance Criteria}
+\label{sect:metric_criteria}
 
 Once the various importance metrics were implemented and applied to the first two graphs, general properties of their resulting values were observed.  In evaluating how each metric performed we first define what we believe makes an effective importance metric in terms of using it to simplify the graph
 for visualization.
@@ -123,9 +124,12 @@ for visualization.
 First, a metric should provide a wide range of weight values across the nodes.  A wider range allows for finer control of the resolution of the simplified graph. This property can be evaluated by the ratio of the range of weight values to the number of nodes in the graph. An example is metric $A$ generates weights in the range of 0 to 400 on a graph $G$ with 1000 nodes.  The weight-range-to-node-count ratio would then be $400/1000 = 0.4:1$.  This provides a consistent way to compare each metric's characteristics across a single graph.  We have captured this data for all of our metrics and test graphs in Table~\ref{tbl:weight_ratio}.
 
 An effective metric should also create a even distribution of these weight values across the entire range.  An even distribution will allow for a more controlled simplification of the graph as the user increases the threshold value.  This allows the user to control the resolution of the resulting
-simplified graph.  This distribution can be measured by observing the rate at which nodes are removed from the graph while simplifying over the range of weight values.  This data has been illustrated in Figure~\ref{fig:node_drop_off}.  The data in these graphs was generated by taking the range of the weight values of each metric on a given graph and dividing it into equal increments.  Data in these graphs was generated by taking the range of the weight values of each metric on a given graph and dividing it into 18 equal increments.  The simplification process was then run at each increment, and the number of nodes remaining after the simplification was then recorded.
+simplified graph.  This distribution can be measured by observing the rate at which nodes are removed from the graph while simplifying over the range of weight values.  
 
-The final criteria for an effective metric is that these two properties should be capable of being utilized to produce a meaningful visual representations of the original graph.  Simplifying a graph using a particular metric should reveal something about the graph's connectivity or underlying structure.
+
+\section{Results}
+\label{sect:Results}
+Using the metric performance criteria defined in Section~\ref{sect:metric_criteria}, we offer an evaluation of each of our weighting metrics when applied to our test data.  The distribution of the weight values across the range of weights is illustrated in Figure~\ref{fig:node_drop_off}.  The data in these graphs was generated by taking the range of the weight values of each metric on a given graph and dividing it into equal increments.  Data in these graphs was generated by taking the range of the weight values of each metric on a given graph and dividing it into 18 equal increments.  The simplification process was then run at each increment, and the number of nodes remaining after the simplification was then recorded.
 
 \begin{figure*}[htp]
 \begin{center}
@@ -156,7 +160,7 @@ Two graphs showing the node drop off rate of each metric against the Citation gr
 Metric & Weight Range & Ratio & Weight Range & Ratio \\
 \hline
 1-Ring& 1 to 75 & 0.0721 & 1 to 942 & 0.2093 \\
-2-Ring & 2 to 380 & 0.3687 & 2 to 3585 & 0.79667 \\
+num-short & 2 to 380 & 0.3687 & 2 to 3585 & 0.79667 \\
 3-Ring & 3 to 763 & 0.7414  & 3 to 4432 & 0.9842 \\
 Shortest Path & 0 to 85284 & 83.2039 & 0 to 12926842 & 2872.6315 \\
 Dist to Leaf & 0 to 7 & 0.0068 & 0 to 4 & 0.0008 \\
@@ -178,6 +182,54 @@ Table \ref{tbl:weight_ratio}.  We can see that as we increase $N$, the ratios ap
 
 The node drop off rates for these metrics also showed a similar relationship as $N$ was increased.  In Figure~\ref{fig:node_drop_off} the three N-Ring metrics start off with a quick drop off at the beginning of the weight range and as $N$ increases, the node drop off rate becomes approximately linear.  This indicates that the distribution of weight values across the entire range becomes more evenly spread out as $N$ is increased.
 
+Figures~\ref{fig:Inet-2-ring} show an example of the visual result generated by applying the 2-ring neighbors metric on the Inet graph.  Figures~\ref{fig:cite-3-ring} show the result of applying the 3-ring neighbors metric to the Citation graph.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m2/inet4500_m[2]_t[300].ps}
+	\label{fig:Inet-2-ring-300}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m2/inet4500_m[2]_t[700].ps}
+	\label{fig:Inet-2-ring-700}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m2/inet4500_m[2]_t[1200].ps}
+	\label{fig:Inet-2-ring-1200}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m2/inet4500_m[2]_t[1800].ps}
+	\label{fig:Inet-2-ring-1800}
+}
+\caption{Inet graph with 4500 Nodes: 2-Ring Neighbors metric with threshold values \subref{fig:Inet-2-ring-300}300, \subref{fig:Inet-2-ring-700}700, \subref{fig:Inet-2-ring-1200}1200, \subref{fig:Inet-2-ring-1800}1800.}
+\label{fig:Inet-2-ring}
+
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[360].ps}
+	\label{fig:cite-3-ring-360}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[504].ps}
+	\label{fig:cite-3-ring-504}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[576].ps}
+	\label{fig:cite-3-ring-576}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[648].ps}
+	\label{fig:cite-3-ring-648}
+}
+\caption{Citation Graph with 1025 Nodes: 3-Ring Neighbors metric with threshold values \subref{fig:cite-3-ring-360}360, \subref{fig:cite-3-ring-504}504, \subref{fig:cite-3-ring-576}576, \subref{fig:cite-3-ring-648}648.}
+\label{fig:cite-3-ring}
+
+\end{figure}
+
 Overall all the properties exhibited by the N-Ring neighbors metrics define them as effective  metrics.  The range of weights across the nodes and the distribution of those weight values are both in line with our definition of a good metric.
 
 %-------------------------------------------------------------------------
@@ -186,256 +238,251 @@ The Shortest Path metric calculates very high weight values for frequently visit
 
 The ratio of weight range to number of nodes on the other hand is quite large.  For the citation graph the Shortest Path metric generated a ratio of $83.2:1$ and for the inet graph a ratio of $2872.6:1$ was generated.  With such large weight-range-to-node-count ratios the difference between simplifying with two distinct threshold values may be only one or two nodes.
 
+Figures~\ref{fig:Inet-num-short} show an example of the visual result generated by applying the number of shortest paths metric on the Inet graph.  Figures~\ref{fig:cite-num-short} show the result of applying this metric to the Citation graph.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m4/inet4500_m[4]_t[1000].ps}
+	\label{fig:Inet-num-short-1000}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m4/inet4500_m[4]_t[40000].ps}
+	\label{fig:Inet-num-short-40000}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m4/inet4500_m[4]_t[100000].ps}
+	\label{fig:Inet-num-short-100000}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m4/inet4500_m[4]_t[645000].ps}
+	\label{fig:Inet-num-short-645000}
+}
+\caption{Inet graph with 4500 Nodes: Shortest Paths metric with threshold values \subref{fig:Inet-num-short-1000}1000, \subref{fig:Inet-num-short-40000}40000, \subref{fig:Inet-num-short-100000}100000, \subref{fig:Inet-num-short-645000}645000.}
+\label{fig:Inet-num-short}
+
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[1404].ps}
+	\label{fig:cite-num-short-1404}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[4212].ps}
+	\label{fig:cite-num-short-4212}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[28828].ps}
+	\label{fig:cite-num-short-28828}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[48828].ps}
+	\label{fig:cite-num-short-48828}
+}
+\caption{Citation Graph with 1025 Nodes: Shortest Paths metric with threshold values \subref{fig:cite-num-short-1404}1404, \subref{fig:cite-num-short-4212}4212, \subref{fig:cite-num-short-28828}28828, \subref{fig:cite-num-short-48828}48828.}
+\label{fig:cite-num-short}
+
+\end{figure}
+
 Overall the metric does not fit very well into our definition of an effective metric.  The weight distribution tends to be heavily biased to the lower end of what is typically a very large range of weight values.  Such a large range of weight values actually gives too much granularity between each distinct threshold value in the higher weighted nodes.  The removal of one or two nodes rarely makes any distinguishable visible difference in the graphs.  This metric could be made more effective by scaling or normalizing the generated weight values.  Doing this should even out the distribution and contract the overly large range of weight values.
 
 %-------------------------------------------------------------------------
 \paragraph*{Eccentricity.}
-The Eccentricity metric provides some interesting results.  This metric depends on the underlying connectivity of the original graph.  We can observe this by looking at the weight-range-to-node-count ratios.  For both graphs this ratio we extremely low, $0.00088:1$ for the inet graph and $0.00878:1$ for the citation graph.  The actual range of weight values for the inet graph was from 0 to 4.  This means that the longest shortest path within this graph is length 4.  This implies one of two things, that the graph is very well connected or it reveals a radial graph structure that flows into a few central nodes.  In our sample images we actually see that it is the latter of the two possibilities in Figure~\ref{fig:Inet-eccen}.  Although these ratios are low, the metrics can still reveal interesting structural details in the graph not previously observed.
+The Eccentricity metric provides some interesting results.  This metric depends on the underlying connectivity of the original graph.  We can observe this by looking at the weight-range-to-node-count ratios.  For both graphs this ratio we extremely low, $0.00088:1$ for the inet graph and $0.00878:1$ for the citation graph.  The actual range of weight values for the inet graph was from 0 to 4.  This means that the longest shortest path within this graph is length 4.  This implies one of two things, that the graph is very well connected or it reveals a radial graph structure that flows into a few central nodes.
 
-The distribution of these weight values is also highly dependent on the underlying structure of the graph.  We see that for the citation graph this metric provides a relatively even drop off rate while the inet graph has a very sharp drop off over the middle weight values in its range.  Although this metric does not fit our criteria for an effective metric, it can still produce some interesting visual information about the underlying structure and connectivity of a graph.
+Figures~\ref{fig:Inet-ecc} show an example of the visual result generated by applying the Eccentricity metric on the Inet graph.  Figures~\ref{fig:cite-ecc} show the result of applying this metric to the Citation graph.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m11/inet4500_m[11]_t[7].ps}
+	\label{fig:Inet-ecc-7}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m11/inet4500_m[11]_t[8].ps}
+	\label{fig:Inet-ecc-8}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m11/inet4500_m[11]_t[10].ps}
+	\label{fig:Inet-ecc-10}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m11/inet4500_m[11]_t[12].ps}
+	\label{fig:Inet-ecc-12}
+}
+\caption{Inet graph with 4500 Nodes: Eccentricity metric with threshold values \subref{fig:Inet-ecc-7}7, \subref{fig:Inet-ecc-8}8, \subref{fig:Inet-ecc-10}10, \subref{fig:Inet-ecc-12}12.}
+\label{fig:Inet-ecc}
+
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[10].ps}
+	\label{fig:cite-ecc-10}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[13].ps}
+	\label{fig:cite-ecc-13}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[15].ps}
+	\label{fig:cite-ecc-15}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[19].ps}
+	\label{fig:cite-ecc-19}
+}
+\caption{Citation Graph with 1025 Nodes: Eccentricity metric with threshold values \subref{fig:cite-ecc-10}10, \subref{fig:cite-ecc-13}13, \subref{fig:cite-ecc-15}15, \subref{fig:cite-ecc-19}19.}
+\label{fig:cite-ecc}
+
+\end{figure}
+
+The distribution of these weight values is also highly dependent on the underlying structure of the graph.  We see that for the citation graph this metric provides a relatively even drop off rate while the Inet graph has a very sharp drop off over the middle weight values in its range.
 
 %-------------------------------------------------------------------------
 \paragraph*{Shortest Distance to Center Node.}
-Since this metric is based on the graph's eccentricity, it displays many of the same properties as the Eccentricity metric.  It maintains very low weight-range-to-node-count ratios, $0.0011:1$ and $0.0087:1$ for the inet and citation graphs respectively, and the distribution is again dependent on the structure of the graph being processed.
+Since this metric is based on the graph's eccentricity, it displays many of the same properties as the Eccentricity metric.  It maintains very low weight-range-to-node-count ratios, $0.0011:1$ and $0.0087:1$ for the Inet and citation graphs respectively, and the distribution is again dependent on the structure of the graph being processed.
 
-While this metric and Eccentricity have some similarities, there are some differences in the resulting weights.  In the Eccentricity metric a node relatively close to a center node may have a lower metric value because of the variety of paths available to reach all other nodes.  While that same node may have a high Center Node metric value simply because it is near a center node.  In a network analogy a given node may not need to reach the edges of the network directly.  Instead it connects to a more centrally located node which handles the distribution.  In this case the Distance to Center metric will capture this property.  The real benefit with this metric is that it provides a different and still relevant visual representation of the simplified graph.
+Figures~\ref{fig:Inet-center} show an example of the visual result generated by applying the Shortest Distance to Center Node metric on the Inet graph.  Figures~\ref{fig:cite-center} show the result of applying this metric to the Citation graph.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m10/inet4500_m[10]_t[3].ps}
+	\label{fig:Inet-center-3}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m10/inet4500_m[10]_t[4].ps}
+	\label{fig:Inet-center-4}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m10/inet4500_m[10]_t[5].ps}
+	\label{fig:Inet-center-5}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m10/inet4500_m[10]_t[6].ps}
+	\label{fig:Inet-center-6}
+}
+\caption{Inet graph with 4500 Nodes: Shortest Distance to a Center Node metric with threshold values \subref{fig:Inet-center-3}3, \subref{fig:Inet-center-4}4, \subref{fig:Inet-center-5}5, \subref{fig:Inet-center-6}6.}
+\label{fig:Inet-center}
+
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[5].ps}
+	\label{fig:cite-center-5}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[6].ps}
+	\label{fig:cite-center-6}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[7].ps}
+	\label{fig:cite-center-7}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[8].ps}
+	\label{fig:cite-center-8}
+}
+\caption{Citation Graph with 1025 Nodes: Shortest Distance to a Center Node metric with threshold values \subref{fig:cite-center-5}5, \subref{fig:cite-center-6}6, \subref{fig:cite-center-7}7, \subref{fig:cite-center-8}8.}
+\label{fig:cite-center}
+
+\end{figure}
+
+While this metric and Eccentricity have some similarities, there are some differences in the resulting weights.  In the Eccentricity metric a node relatively close to a center node may have a lower metric value because of the variety of paths available to reach all other nodes.  While that same node may have a high Center Node metric value simply because it is near a center node.  In a network analogy a given node may not need to reach the edges of the network directly.  Instead it connects to a more centrally located node which handles the distribution.  In this case the Distance to Center metric will capture this property.
 
 %-------------------------------------------------------------------------
 \paragraph*{Shortest Path to Leaf Node.}
 The Shortest Path to a Leaf Node metric is another that is highly dependent on the topological structure of the original graph.  Firstly, it assumes that the given graph does contain leaf nodes.  If it does not then this metric cannot be computed.  In relating this metric to our standards for an effective metric, this one is a bit weak.  Its weight-range-to-node-count ratios are fairly small.  The citation graph's ratio was $0.0068:1$ while the inet graph's was $0.00088:1$.  These values are about the same as the Eccentricity and Distance to Center Node metrics.  The node drop off rates follow a trend similar to that of the Eccentricity and Distance to Center Node metrics as seen in Figure~\ref{fig:node_drop_off}.
 
-Overall this metric is designed to give a good measure of how well connected the leaf nodes of a graph may be.  It can also offer insight into how well the non-leaf nodes are connected amongst each other. If the metric's values tend to be high, then the non-leaf nodes are not very well-connected and need to follow longer paths to get to the periphery of the graph.  Although it does not meet the first two criteria of an effective metric it does produce some acceptable visual output of the graphs.
+Figures~\ref{fig:Inet-leaf} show an example of the visual result generated by applying the Shortest Distance to Center Node metric on the Inet graph.  Figures~\ref{fig:cite-leaf} show the result of applying this metric to the Citation graph.
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m9/inet4500_m[9]_t[3].ps}
+	\label{fig:Inet-leaf-3}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m9/inet4500_m[9]_t[5].ps}
+	\label{fig:Inet-leaf-5}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m9/inet4500_m[9]_t[6].ps}
+	\label{fig:Inet-leaf-6}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/inet4500/m9/inet4500_m[9]_t[7].ps}
+	\label{fig:Inet-leaf-7}
+}
+\caption{Inet graph with 4500 Nodes: Shortest Path to a Leaf Node metric with threshold values \subref{fig:Inet-leaf-3}3, \subref{fig:Inet-leaf-5}5, \subref{fig:Inet-leaf-6}6, \subref{fig:Inet-leaf-7}7.}
+\label{fig:Inet-leaf}
+
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[2].ps}
+	\label{fig:cite-leaf-2}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[5].ps}
+	\label{fig:cite-leaf-5}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[6].ps}
+	\label{fig:cite-leaf-6}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[9].ps}
+	\label{fig:cite-leaf-9}
+}
+\caption{Citation Graph with 1025 Nodes: Shortest Path to a Leaf Node metric with threshold values \subref{fig:cite-leaf-2}2, \subref{fig:cite-leaf-5}5, \subref{fig:cite-leaf-6}6, \subref{fig:cite-leaf-9}9.}
+\label{fig:cite-leaf}
+
+\end{figure}
+
+Overall this metric is designed to give a good measure of how well connected the leaf nodes of a graph may be.  It can also offer insight into how well the non-leaf nodes are connected amongst each other. If the metric's values tend to be high, then the non-leaf nodes are not very well-connected and need to follow longer paths to get to the periphery of the graph.
 
 %-------------------------------------------------------------------------
-%\cutsectionbefore
-%TODO: Revaluate the results section against the new metric evaluations, should also see if it needs to be modified to correspond to the new limage layouts.
-\section{Results}
-\label{sect:Results}
+\paragraph*{Network Flow}
+The computation of the Network Flow metric is one based on criteria other than the topology of the given graph.  Therefore our performance criteria does not hold when evaluating this metric.  We can see the results of applying the pruning algorithm to the flow graph shown in Figures~\ref{fig:flow}.  These images present a steady thinning of the graph, while maintaining its connectivity. The T=6000 graph shows the drop out of all the low flow nodes in the network. The T=18000 graph continues to simplify the display of the network so we can start to see a more defined structure to the higher flowing nodes.  The transition from the T=18000 graph to the T=50000 graph then reveals those nodes that have significant flow coming out of them, marking them as nodes which are important for flowing lots of information through the network.
 
-Figures \ref{fig:flow} to \ref{fig:Inet-2-ring} present the results from applying our simplification algorithm to the three graphs described in Section \ref{sect:Data}.  Applying the pruning algorithm to the flow graph of Figure \ref{fig:flow} presents a steady thinning of the graph, while maintaining its connectivity. The T=6000 graph shows the drop out of all the low flow nodes in the network. The T=18000 graph continues to simplify the display of the network so we can start to see a more defined structure to the higher flowing nodes.  The transition from the T=18000 graph to the T=50000 graph then reveals more of the ``backbone'' of the flow graph.
+\begin{figure}[ht]
+\centering
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/oman_v1000/oman_v1000_t[0].ps}
+	\label{fig:flow-0}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/oman_v1000/oman_v1000_t[6000].ps}
+	\label{fig:flow-6000}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/oman_v1000/oman_v1000_t[18000].ps}
+	\label{fig:flow-18000}
+}
+\subfigure[]{
+	\includegraphics[height=0.33\linewidth,width=0.33\linewidth]{images/oman_v1000/oman_v1000_t[50000].ps}
+	\label{fig:flow-50000}
+}
+\caption{Inet graph with 4500 Nodes: Shortest Path to a Leaf Node metric with threshold values \subref{fig:flow-0}0, \subref{fig:flow-6000}6000, \subref{fig:flow-18000}18000, \subref{fig:flow-50000}50000.}
+\label{fig:flow}
 
+\end{figure}
 
-Applying the simplification algorithm, with its five different metrics, to the Inet graph in Figures \ref{fig:Inet-2-ring} to \ref{fig:Inet-eccen} reveals the hierarchical structure of this Internet-like graph.  In the first and second graph of Figure~\ref{fig:Inet-2-ring} we can see the radial dispersal of nodes, but the density of the edges still hides many of underlying nodes.  The last two graphs reveal the underlying central structure of these radial layouts.  Figure~\ref{fig:Inet-short-path} very quickly reveals the central node structure that looks similar to Figure~\ref{fig:Inet-2-ring}.  It is also interesting to note that all five metrics converge on a slightly different set of core nodes.
-
-Applying the simplification algorithm to the less structured citation graph provides different kinds of results.  The 3-Ring Neighbors metric in Figure \ref{fig:cite-3-ring} reveals the structure underneath the heavily connected portion of the graph.  The Shortest Path and Distance to Center metrics in Figures \ref{fig:cite-short-path} and \ref{fig:cite-center} reveal a small set of core nodes within the main body of the graph.  While the Distance to Leaf and Eccentricity metrics in Figures \ref{fig:cite-leaf} and \ref{fig:cite-eccen} disclose a simplified version of the entire graph structure as opposed to just the central nodes.
-
-Looking over Figures \ref{fig:Inet-center} to \ref{fig:cite-eccen} visually reinforces our observations on the properties of the individual metrics.  Those metrics that produce a narrow range of values (Distance to Leaf, Distance to Center, Eccentricity) provide less control for uniformly pruning the tree with fewer resolution options. The remaining metric (N-Ring Neighbors and Shortest Path) provide the user with many more threshold values to choose from; thus providing the ability to more smoothly simplify the input graph. 
-
+%-------------------------------------------------------------------------
+\paragraph*{Algorithm Run-time Performance}
 The computation time needed to perform simplification is not significant. Each graph simplification requires about a second to a few tens of seconds (with a rare simplification using the Number of Shortest Paths metric needing about a CPU-minute) to compute, with most of the graph processing requiring only a few CPU-seconds on an Intel Dual Core 1.73 GHz processor. These times were to both compute the given metric and prune the graph incrementally while preserving connectivity.  Times varied slightly based on the metric calculated, graph size, and threshold and increment values.
 
 
 %-------------------------------------------------------------------------
 %\cutsectionbefore
 \section{Conclusion}
-Complex graphs, ones containing thousands of nodes of high degree, are difficult to visualize. Displaying all of the nodes and edges of these graphs can create an incomprehensible cluttered output.  We have presented a simplification algorithm that may be applied to a complex graph in order to produce a controlled thinning of the graph. The simplification of the graph provides an approach to visualizing the fundamental structure of the graph by displaying the most important nodes, where importance may be based on the topology of the graph or external factors.  The simplification algorithm consists of two steps, calculation of importance metrics and pruning.  We have described several weighting functions and have presented the simplified graphs produced by applying them.  Future work includes developing additional importance metrics, as well as testing and evaluating our approach on other types of graphs.
-
-\begin{figurehere}
-\begin{center}
-%\vspace{5mm}
-  \mbox{} \hfill
-  \includegraphics[width=0.22\linewidth]{images/oman_v1000/oman_v1000_t[0].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/oman_v1000/oman_v1000_t[6000].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/oman_v1000/oman_v1000_t[18000].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/oman_v1000/oman_v1000_t[50000].ps}
-\hfill \mbox{}
-\vspace{-3mm}
-  \caption{%
-           Ad hoc network graph with 1000 nodes: Network flow value with threshold values 0, 6000, 18000, 50000.}
-\label{fig:flow}
-\end{center}
-\end{figurehere}
-
-\begin{figurehere}
-\begin{center}
-  \mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m2/inet4500_m[2]_t[300].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m2/inet4500_m[2]_t[700].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m2/inet4500_m[2]_t[1200].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m2/inet4500_m[2]_t[1800].ps}
-\hfill \mbox{}
-\vspace{-8mm}
-  \caption{\label{fig:Inet-2-ring}%
-           Inet graph with 4500 Nodes: 2-Ring Neighbors metric with threshold values 300, 700, 1200, 1800.}
-\end{center}
-\end{figurehere}
-
-
-%Page 1 of 2
-%-------------------------------------------------------------------------
-%\begin{figure*}%[p]
-
-%\end{center}
-%\end{figure*}
-
-\begin{figure*}
-\begin{center}
-%\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m4/inet4500_m[4]_t[1000].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m4/inet4500_m[4]_t[40000].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m4/inet4500_m[4]_t[100000].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m4/inet4500_m[4]_t[645000].ps}
-\hfill \mbox{}
-\vspace{-10mm}
-  \caption{\label{fig:Inet-short-path}%
-           Inet graph with 4500 Nodes: Shortest Paths metric with threshold values 1000, 40000, 100000, 645000.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m9/inet4500_m[9]_t[3].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m9/inet4500_m[9]_t[5].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m9/inet4500_m[9]_t[6].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m9/inet4500_m[9]_t[7].ps}
-\hfill \mbox{}
-\vspace{-10mm}
-  \caption{\label{fig:Inet-leaf}%
-           Inet graph with 4500 Nodes: Distance to Leaf metric with threshold values 3, 5, 6, 7.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[width=0.22\linewidth]{images/inet4500/m10/inet4500_m[10]_t[3].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/inet4500/m10/inet4500_m[10]_t[4].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/inet4500/m10/inet4500_m[10]_t[5].ps}
-  \hfill
-  \includegraphics[width=0.22\linewidth]{images/inet4500/m10/inet4500_m[10]_t[6].ps}
-\hfill \mbox{}
-\vspace{-10mm}
-  \caption{\label{fig:Inet-center}%
-           Inet graph with 4500 Nodes: Distance to Center metric with threshold values 3, 4, 5, 6.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m11/inet4500_m[11]_t[7].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m11/inet4500_m[11]_t[8].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m11/inet4500_m[11]_t[10].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/inet4500/m11/inet4500_m[11]_t[12].ps}
-\hfill \mbox{}
-\vspace{-10mm}
-  \caption{\label{fig:Inet-eccen}%
-           Inet 4500 Nodes: Eccentricity metric with threshold values 7, 8, 10, 12.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}%[p]
-%\begin{center}
-\vspace{5mm}
-  \mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[360].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[504].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[576].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m3/citation_graph_m[3]_t[648].ps}
-\hfill \mbox{}
-\vspace{-10mm}
-  \caption{\label{fig:cite-3-ring}%
-           Citation Graph with 1025 Nodes: 3-Ring Neighbors metric with threshold values 360, 504, 576, 648.}
-
-\end{center}
-\end{figure*}
-
-%Page 2 of 2
-%-------------------------------------------------------------------------
-
-
-\begin{figure*}
-\begin{center}
-%\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[1404].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[4212].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[28828].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m4/citation_graph_m[4]_t[48828].ps}
-\hfill \mbox{}
-\vspace{-3mm}
-  \caption{\label{fig:cite-short-path}%
-           Citation Graph with 1025 Nodes: Shortest Paths metric with threshold values 1404, 4212, 28828, 49828.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[2].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[5].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[6].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m9/citation_graph_m[9]_t[9].ps}
-\hfill \mbox{}
-\vspace{-6mm}
-  \caption{\label{fig:cite-leaf}%
-           Citation Graph with 1025 Nodes: Distance to Leaf metric with threshold values 2, 5, 6, 9.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[5].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[6].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[7].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m10/citation_graph_m[10]_t[8].ps}
-\hfill \mbox{}
-\vspace{-8mm}
-  \caption{\label{fig:cite-center}%
-           Citation Graph with 1025 Nodes: Distance to Center metric with threshold values 5, 6, 7, 8.}
-%\end{center}
-%\end{figure*}
-
-%\begin{figure*}
-%\begin{center}
-\vspace{5mm}
-\mbox{} \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[10].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[13].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[15].ps}
-  \hfill
-  \includegraphics[height=0.22\linewidth,width=0.22\linewidth]{images/citation_graph/m11/citation_graph_m[11]_t[19].ps}
-\hfill \mbox{}
-\vspace{-3mm}
-  \caption{\label{fig:cite-eccen}%
-           Citation Graph with 1025 Nodes: Eccentricity metric with threshold values 10, 13, 15, 19.}
-\end{center}
-\end{figure*}
+Complex graphs, ones containing thousands of nodes of high degree, are difficult to visualize. Displaying all of the nodes and edges of these graphs can create an incomprehensible cluttered output.  We have presented a simplification algorithm that may be applied to a complex graph in order to produce a controlled thinning of the graph. The simplification of the graph provides an approach to visualizing and examining some of the underlying structures of the graph by displaying the most important nodes, where importance may be based on the topology of the graph or external factors.  The simplification algorithm consists of two steps, calculation of importance metrics and pruning.  We have described several weighting functions and have presented the simplified graphs produced by applying them.  Future work includes developing additional importance metrics, as well as testing and evaluating our approach on other types of graphs.
