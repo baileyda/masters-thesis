@@ -41,6 +41,24 @@ This model defines the parameters that are then visualized to show the signal ra
 \label{fig:rad_pat}
 \end{figure}
 
+Figures~\ref{fig:rad_pat_zoom} show us a simplified version of those visualization presented in Figures~\ref{fig:rad_pat}.  This simplified version has removed all the receiving nodes and their associated edges.  The arena size has also been zoomed into so we can more clearly see the actual patterns visualized.  In analyzing the patterns of each transmitter, we can see that the patterns of neighboring transmitters can bleed into or merge with one another.  This has a negative effect on the SINR of each transmitters signal.
+
+\begin{figure} [ht]
+%\begin{center}
+\centering
+	\subfigure[]{
+		\includegraphics[scale=0.25]{images/network_vis/rad_pat_certain_small_scale.eps}
+		\label{fig:rad_pat_certain_zoom}
+	}
+	\subfigure[]{
+		\includegraphics[scale=0.25]{images/network_vis/rad_pat_uncertain_small_scale.eps}
+		\label{fig:rad_pat_uncertain_zoom}
+	}
+%\end{center}
+\caption{Simplified versions of the signal radiation pattern visualizations for the two channel state models, \subref{fig:rad_pat_certain_zoom} fully known channel state, \subref{fig:rad_pat_uncertain_zoom} highly unstable channel state.}
+\label{fig:rad_pat_zoom}
+\end{figure}
+
 The signal radiation patterns are shown by the change in color gradient as the signal gets weaker.  The gradient starts with white as the highest value and shifts into blue for intermediate values and finally to black for a zero valued signal.  This coloring scheme is easily achieved by using the HSL color scheme.  The hue value can be modified to adjust the coloring of the radiation auras according the what the user may want to see.  The saturation value remains a constant and the lightness values is adjusted by the visualization to perform the color fading.  Figure \ref{fig:rad_pat_certain} illustrates the fully known channel state model while Figure \ref{fig:rad_pat_uncertain} illustrates the highly unstable channel state model.  These two visual presentations of the physical state help demonstrate that it is much more difficult to make resource allocation decisions under uncertainty.
 
 \begin{figure}[ht]
@@ -58,7 +76,24 @@ The signal radiation patterns are shown by the change in color gradient as the s
 \label{fig:rad_pat_sinr}
 \end{figure}
 
-We can also visualize the regions where the SINR is acceptably high for a feasible channel to exist.  That is, if a transmitter were to move into one of those regions, it would be able to transmit a signal to the receiving node associated with that region.  These areas are represented by bright green regions in the visualization.  These regions can have their transparency adjusted so the underlying signal radiation patterns can still be seen as desired.  Figure \ref{fig:rad_pat_sinr_certain} shows us these SINR regions in the fully known channel state model and Figure \ref{fig:rad_pat_sinr_uncertain} shows us these same regions in the highly unstable channel state model. Again we can see that the presence of uncertainty makes it difficult to design node movement and scheduling such that the receiver nodes can remain in the feasible regions of the transmitter with whom they seek to communicate.
+We can also visualize the regions where the SINR is acceptably high for a feasible channel to exist.  That is, if a transmitter were to move into one of those regions, it would be able to transmit a signal to the receiving node associated with that region.  These areas are represented by bright green regions in the visualization.  These regions can have their transparency adjusted so the underlying signal radiation patterns can still be seen as desired.  Figures~\ref{fig:rad_pat_sinr_certain} shows us these SINR regions in the fully known channel state model and Figures~\ref{fig:rad_pat_sinr_uncertain} shows us these same regions in the highly unstable channel state model. In Figures~\ref{fig:rad_pat_sinr_zoom} we again see a simplified version of the visualization containing the regions of acceptable SINR.  In these images we can clearly see how the proximity to other transmitters has an effect on the region of acceptable SINR.  Although the signal strength appears to be strong enough based on the just the radiation pattern, we can now see the negative effects neighboring transmitters can have on one another.
+
+\begin{figure}[ht]
+\begin{center}
+	\subfigure[]{
+		\includegraphics[scale=0.25]{images/network_vis/rad_pat_certain_small_scale_sinr.eps}
+		\label{fig:rad_pat_sinr_certain_zoom}
+	}
+	\subfigure[]{
+		\includegraphics[scale=0.25]{images/network_vis/rad_pat_uncertain_small_scale_sinr.eps}
+		\label{fig:rad_pat_sinr_uncertain_zoom}
+}
+\end{center}
+\caption{Acceptable SINR regions with signal radiation patterns for the two channel state models, \subref{fig:rad_pat_sinr_certain_zoom} fully known channel state, \subref{fig:rad_pat_sinr_uncertain_zoom} highly unstable channel state.}
+\label{fig:rad_pat_sinr_zoom}
+\end{figure}
+
+In visualizing these regions of acceptable SINR we can also see that the presence of uncertainty makes it difficult to design node movement and scheduling such that the receiver nodes can remain in the feasible regions of the transmitter with whom they seek to communicate.
 
 
 \section{Digital Terrain Visualization}
@@ -90,7 +125,9 @@ The second method of access allows the users to extract a sub-matrix of elevatio
 \label{fig:terrain_bb}
 \end{figure}
 
-The third method of access allows the users to generate terrain profiles along either a horizontal or vertical line.  The vertical profile takes two coordinates that define a straight line through the terrain and the number of points the user wants returned along this line.  A vector of elevation values is then returned with the desired number of points.  Elevation data points are interpolated as needed to fill out the desired sized vector.  A horizontal profile is generated by defining a region of interest with a bounding box and giving a cutoff elevation value.  This region of interest is then processed such that all points with elevation greater than or equal to the cutoff elevation remain and all others are dropped.  Once this is done, polygons are created from the sets of remaining elevation points.  This set of polygons is then returned to the user.  Figure \ref{fig:terrain_horizontal_cut} illustrates this method.  Here all the white points are those that are above the cutoff elevation and the green lines draw out the polygons then defined by those regions.
+The third method of access allows the users to generate terrain profiles along either a horizontal or vertical line.  The vertical profile takes two coordinates that define a straight line through the terrain and the number of points the user wants returned along this line.  A vector of elevation values is then returned with the desired number of points.  Elevation data points are interpolated as needed to fill out the desired sized vector.  
+
+A horizontal profile is generated by defining a region of interest in the terrain by using a bounding box and giving a cutoff elevation value.  This region of interest is then processed such that all points with elevation greater than or equal to the cutoff elevation remain and all others are dropped.  In Figure~\ref{fig:terrain_horizontal_cut} these points are represented by the white dots.  Once this is done, polygons are created from the various connected components of these remaining elevation points.  This is done using a simple convex hull operation.  In Figure~\ref{fig:terrain_horizontal_cut} these polygons are shown as the green lines surrounding sets of white points.  This set of polygons is then returned to the user.
 
 \begin{figure}[ht]
 \centering
